@@ -15,6 +15,7 @@ class ArticleStore {
       date: 'Feb 28, 2024',
       author: 'John Doe',
       status: 'published',
+      featured: true
     },
     {
       id: '2',
@@ -26,6 +27,7 @@ class ArticleStore {
       date: 'Feb 28, 2024',
       author: 'Jane Smith',
       status: 'draft',
+      featured: false
     },
   ];
 
