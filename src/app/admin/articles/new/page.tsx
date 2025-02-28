@@ -26,7 +26,8 @@ const testArticle: ArticleFormData = {
   category: "Technology",
   imageUrl: "https://picsum.photos/800/600?random=3",
   author: "Test Author",
-  status: "draft"
+  status: "draft",
+  featured: false
 };
 
 export default function NewArticlePage() {
