@@ -5,34 +5,7 @@ import NewsCard from '@/components/NewsCard';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article } from '@/types/article';
-
-// Mock data for static generation
-const staticArticles: Article[] = [
-  {
-    id: '1',
-    title: 'Breaking: Major Technology Breakthrough in Renewable Energy',
-    excerpt: 'Scientists have discovered a new method to improve solar panel efficiency by 40%, potentially revolutionizing renewable energy production.',
-    content: 'Full article content here...',
-    category: 'Technology',
-    imageUrl: 'https://picsum.photos/800/600?random=1',
-    date: 'Feb 28, 2024',
-    author: 'John Doe',
-    status: 'published',
-    featured: true
-  },
-  {
-    id: '2',
-    title: 'Global Economic Summit Addresses Climate Change',
-    excerpt: 'World leaders gather to discuss economic policies aimed at combating climate change and promoting sustainable development.',
-    content: 'Full article content here...',
-    category: 'Politics',
-    imageUrl: 'https://picsum.photos/800/600?random=2',
-    date: 'Feb 28, 2024',
-    author: 'Jane Smith',
-    status: 'draft',
-    featured: false
-  }
-];
+import { articleStore } from '@/lib/store';
 
 function filterArticles(articles: Article[], category: string): Article[] {
   return articles.filter((article: Article) => 
@@ -43,10 +16,11 @@ function filterArticles(articles: Article[], category: string): Article[] {
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const publishedArticles = filterArticles(staticArticles, selectedCategory);
+  const articles = articleStore.getArticles();
+  const publishedArticles = filterArticles(articles, selectedCategory);
   const featuredArticle = publishedArticles.find((article: Article) => article.featured) || publishedArticles[0];
 
-  if (staticArticles.length === 0) {
+  if (articles.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center text-gray-600">
