@@ -1,5 +1,9 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import NewsCard from '@/components/NewsCard';
+import Link from 'next/link';
+import { articleStore } from '@/lib/store';
 
 const validCategories = ['politics', 'technology', 'sports', 'entertainment', 'business'];
 
@@ -33,7 +37,10 @@ export default function CategoryPage({ params }: { params: { category: string } 
     notFound();
   }
 
-  const articles = getMockCategoryArticles(category);
+  const articles = articleStore.getArticles().filter(
+    article => article.status === 'published' && 
+    article.category.toLowerCase() === category
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -63,7 +70,9 @@ export default function CategoryPage({ params }: { params: { category: string } 
       {/* Articles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles.map((article) => (
-          <NewsCard key={article.id} {...article} />
+          <Link key={article.id} href={`/articles/${article.id}`}>
+            <NewsCard {...article} />
+          </Link>
         ))}
       </div>
 
