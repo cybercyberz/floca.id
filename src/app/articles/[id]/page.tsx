@@ -1,3 +1,5 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,7 +8,7 @@ import { articleStore } from '@/lib/store';
 export default function ArticlePage({ params }: { params: { id: string } }) {
   const article = articleStore.getArticleById(params.id);
 
-  if (!article) {
+  if (!article || article.status !== 'published') {
     notFound();
   }
 
@@ -30,6 +32,9 @@ export default function ArticlePage({ params }: { params: { id: string } }) {
               {article.category}
             </span>
           </div>
+          <p className="text-xl text-gray-600">
+            {article.excerpt}
+          </p>
         </header>
 
         <div className="relative h-[400px] mb-8">
