@@ -1,0 +1,13 @@
+[33mtag v1.0.0[m
+Tagger: cyberintern <extracrizp@gmail.com>
+Date:   Fri Feb 28 23:05:10 2025 +1100
+
+First stable release: Working news platform with admin dashboard, article management, and responsive design
+
+[33mcommit 0d5400ee245b26b55fc5de3a62c066cfc650f5e4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.0.0[m[33m, [m[1;31morigin/main[m[33m)[m
+Merge: 8e8fef8 8ecbc3b
+Author: cyberintern <extracrizp@gmail.com>
+Date:   Fri Feb 28 22:48:18 2025 +1100
+
+    Merge remote changes and resolve conflicts
+
