@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
+import { articleStore } from '@/lib/store';
 
 // Dynamically import ArticleForm with no SSR
 const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -27,19 +28,13 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchArticle = () => {
       try {
-        console.log('Fetching article with ID:', params.id);
-        const response = await fetch(`/api/articles/${params.id}`);
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch article');
+        const foundArticle = articleStore.getArticleById(params.id);
+        if (!foundArticle) {
+          throw new Error('Article not found');
         }
-        
-        const data = await response.json();
-        console.log('Fetched article:', data);
-        setArticle(data);
+        setArticle(foundArticle);
       } catch (err) {
         console.error('Error fetching article:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -53,26 +48,18 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
 
   const handleSubmit = async (data: ArticleFormData) => {
     try {
-      console.log('Updating article:', data);
-      const response = await fetch(`/api/articles/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      const success = articleStore.updateArticle(params.id, {
+        ...data,
+        id: params.id,
+        date: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
       });
 
-      const result = await response.json();
-      console.log('Update response:', result);
-
-      if (!response.ok) {
-        if (result.error === 'Validation failed') {
-          throw new Error(
-            'Validation failed: ' + 
-            result.details.map((err: any) => `${err.path}: ${err.message}`).join(', ')
-          );
-        }
-        throw new Error(result.error || 'Failed to update article');
+      if (!success) {
+        throw new Error('Failed to update article');
       }
 
       router.push('/admin');
