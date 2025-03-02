@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import dynamic from 'next/dynamic';
+import type { ArticleFormProps } from '@/components/ArticleForm';
 
 // Dynamically import ArticleForm with no SSR
-const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
+const ArticleForm = dynamic(() => import('@/components/ArticleForm').then(mod => mod.default), {
   ssr: false,
   loading: () => (
     <div className="animate-pulse">
@@ -51,20 +52,19 @@ export default function EditArticlePage() {
 
   const handleSubmit = async (formData: ArticleFormData) => {
     try {
-      if (!article) return;
+      if (!article) {
+        setError('No article found to update');
+        return;
+      }
       
       const updatedArticle: Article = {
         ...article,
         ...formData,
-        date: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
+        date: new Date().toISOString()
       };
 
       await articleStore.updateArticle(params.id as string, updatedArticle);
-      router.push('/admin/articles');
+      router.push('/admin');
     } catch (err) {
       console.error('Error updating article:', err);
       setError(err instanceof Error ? err.message : 'Failed to update article');
