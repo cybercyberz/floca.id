@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Article } from '@/types/article';
+import { articleStore } from '@/lib/store';
 
 export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('articles');
@@ -23,11 +24,30 @@ export default function AdminDashboard() {
     setError('');
     
     try {
-      console.log('Fetching articles from API...');
+      console.log('Starting to fetch articles...');
+      
+      // Try to fetch directly from articleStore first
+      try {
+        console.log('Attempting to fetch from articleStore...');
+        const articlesFromStore = await articleStore.getArticles();
+        console.log('Articles from store:', articlesFromStore);
+        setArticles(articlesFromStore);
+        return;
+      } catch (storeError) {
+        console.error('Error fetching from articleStore:', storeError);
+      }
+
+      // Fallback to API route if store fails
+      console.log('Falling back to API route...');
       const response = await fetch('/api/articles');
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
+        console.error('API Response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
         throw new Error(
           errorData?.error || 
           `Failed to fetch articles: ${response.status} ${response.statusText}`
@@ -41,7 +61,7 @@ export default function AdminDashboard() {
       console.error('Error in fetchArticles:', err);
       setError(
         err instanceof Error 
-          ? err.message 
+          ? `Error: ${err.message}${err.cause ? ` (Cause: ${err.cause})` : ''}`
           : 'An unexpected error occurred while fetching articles'
       );
     } finally {
