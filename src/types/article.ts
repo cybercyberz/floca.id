@@ -5,19 +5,14 @@ export interface Article {
   content: string;
   category: string;
   imageUrl: string;
-  date: string;
   author: string;
+  date: string;
   status: 'draft' | 'published';
   featured: boolean;
 }
 
-export interface ArticleFormData {
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  imageUrl: string;
-  author: string;
-  status: 'draft' | 'published';
-  featured: boolean;
-} 
+// ArticleFormData is what we get from the form, without id and date
+export type ArticleFormData = Omit<Article, 'id' | 'date'>;
+
+// For creating a new article, we need everything except the id
+export type NewArticle = Omit<Article, 'id'>; 
