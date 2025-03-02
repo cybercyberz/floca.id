@@ -33,7 +33,7 @@ export default function EditArticlePage() {
       try {
         setLoading(true);
         setError(null);
-        const foundArticle = await articleStore.getArticleById(params.id as string);
+        const foundArticle = await articleStore.getArticle(params.id as string);
         if (!foundArticle) {
           throw new Error('Article not found');
         }

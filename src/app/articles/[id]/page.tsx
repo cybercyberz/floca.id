@@ -18,7 +18,7 @@ export default function ArticlePage() {
       try {
         setLoading(true);
         setError(null);
-        const foundArticle = await articleStore.getArticleById(params.id as string);
+        const foundArticle = await articleStore.getArticle(params.id as string);
         if (!foundArticle || foundArticle.status !== 'published') {
           notFound();
           return;

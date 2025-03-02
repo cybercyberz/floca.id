@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const article = await articleStore.getArticleById(params.id);
+    const article = await articleStore.getArticle(params.id);
     
     if (!article) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function PUT(
     const body = await request.json();
     const validatedData = articleSchema.parse(body);
 
-    const existingArticle = await articleStore.getArticleById(params.id);
+    const existingArticle = await articleStore.getArticle(params.id);
     if (!existingArticle) {
       return NextResponse.json(
         { error: 'Article not found' },
@@ -78,15 +78,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const success = await articleStore.deleteArticle(params.id);
+    await articleStore.deleteArticle(params.id);
     
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to delete article' },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json({ message: 'Article deleted successfully' });
   } catch (error) {
     console.error('Error deleting article:', error);
