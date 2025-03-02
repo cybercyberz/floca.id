@@ -107,12 +107,11 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Article</h1>
-      <ArticleForm 
-        article={article} 
-        onSubmit={handleSubmit} 
-        onCancel={() => router.push('/admin/articles')}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Edit Article</h1>
+      <ArticleForm
+        initialData={article}
+        onSubmit={handleSubmit}
       />
     </div>
   );
