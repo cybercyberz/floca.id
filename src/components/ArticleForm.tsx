@@ -203,21 +203,24 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
         <CldUploadWidget
           uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-          onUpload={(result: any) => {
-            console.log('Raw Cloudinary result:', result);
-            if (result.event === 'success' && result.info) {
+          onUpload={(result: any, widget: any) => {
+            console.log('Raw upload result:', result);
+            // Check if it's the success event and has info
+            if (result?.info) {
               const imageUrl = result.info.secure_url;
-              console.log('Successfully got image URL:', imageUrl);
+              console.log('Setting image URL:', imageUrl);
               setFormData(prev => {
                 const updated = {
                   ...prev,
                   imageUrl: imageUrl
                 };
-                console.log('Form data after image update:', updated);
+                console.log('Updated form data with image:', updated);
                 return updated;
               });
-            } else {
-              console.error('Invalid upload result:', result);
+              // Close the widget after successful upload
+              if (widget) {
+                widget.close();
+              }
             }
           }}
           options={{
@@ -226,10 +229,27 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
             clientAllowedFormats: ["jpeg", "png", "jpg", "webp"],
             maxFileSize: 10000000, // 10MB
             sources: ["local", "url"],
-            multiple: false
+            multiple: false,
+            styles: {
+              palette: {
+                window: "#FFFFFF",
+                windowBorder: "#90A0B3",
+                tabIcon: "#0078FF",
+                menuIcons: "#5A616A",
+                textDark: "#000000",
+                textLight: "#FFFFFF",
+                link: "#0078FF",
+                action: "#FF620C",
+                inactiveTabIcon: "#0E2F5A",
+                error: "#F44235",
+                inProgress: "#0078FF",
+                complete: "#20B832",
+                sourceBg: "#E4EBF1"
+              }
+            }
           }}
         >
-          {({ open }: { open: () => void }) => (
+          {({ open }) => (
             <div className="space-y-4">
               {formData.imageUrl && (
                 <div className="mt-2">
@@ -243,12 +263,12 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Opening upload widget');
+                  console.log('Opening Cloudinary upload widget');
                   open();
                 }}
                 className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Upload Image
+                {formData.imageUrl ? 'Change Image' : 'Upload Image'}
               </button>
             </div>
           )}
