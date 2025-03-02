@@ -69,7 +69,11 @@ export default function ArticlePage() {
     return null;
   }
 
-  console.log('Rendering article with imageUrl:', article.imageUrl);
+  console.log('Rendering article with data:', {
+    id: params.id,
+    hasImage: !!article.imageUrl,
+    imageUrl: article.imageUrl
+  });
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -82,6 +86,10 @@ export default function ArticlePage() {
             priority
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={(e) => {
+              console.error('Error loading image:', article.imageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
           />
         </div>
       )}
