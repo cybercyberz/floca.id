@@ -19,15 +19,31 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchArticles = async () => {
+    setIsLoading(true);
+    setError('');
+    
     try {
+      console.log('Fetching articles from API...');
       const response = await fetch('/api/articles');
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch articles');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || 
+          `Failed to fetch articles: ${response.status} ${response.statusText}`
+        );
       }
+      
       const data = await response.json();
+      console.log('Articles fetched successfully:', data);
       setArticles(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error in fetchArticles:', err);
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : 'An unexpected error occurred while fetching articles'
+      );
     } finally {
       setIsLoading(false);
     }
