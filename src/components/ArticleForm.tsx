@@ -212,16 +212,23 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
             if (result?.event === 'success' && result?.info?.secure_url) {
               const imageUrl = result.info.secure_url;
               console.log('Setting image URL from Cloudinary:', imageUrl);
+              
+              // Ensure the URL is properly formatted
+              const cleanImageUrl = imageUrl.trim();
+              
               setFormData(prev => {
                 const updated = {
                   ...prev,
-                  imageUrl: imageUrl
+                  imageUrl: cleanImageUrl
                 };
                 console.log('Updated form data with new image:', updated);
                 return updated;
               });
+              
               // Close the widget after successful upload
-              widget?.close();
+              if (widget) {
+                widget.close();
+              }
             } else {
               console.warn('Invalid upload result from Cloudinary:', result);
             }
