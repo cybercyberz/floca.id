@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('articles');
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const router = useRouter();
@@ -21,52 +21,23 @@ export default function AdminDashboard() {
 
   const fetchArticles = async () => {
     setIsLoading(true);
-    setError('');
-    
+    setError(null);
     try {
       console.log('Starting to fetch articles...');
-      
-      // Try to fetch directly from articleStore first
-      try {
-        console.log('Attempting to fetch from articleStore...');
-        const articlesFromStore = await articleStore.getArticles();
-        console.log('Articles from store:', articlesFromStore);
-        setArticles(articlesFromStore);
-        return;
-      } catch (storeError) {
-        console.error('Error fetching from articleStore:', storeError);
-      }
-
-      // Fallback to API route if store fails
-      console.log('Falling back to API route...');
-      const response = await fetch('/api/articles');
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('API Response not OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorData
-        });
-        throw new Error(
-          errorData?.error || 
-          `Failed to fetch articles: ${response.status} ${response.statusText}`
-        );
-      }
-      
-      const data = await response.json();
-      console.log('Articles fetched successfully:', data);
-      setArticles(data);
-    } catch (err) {
-      console.error('Error in fetchArticles:', err);
-      setError(
-        err instanceof Error 
-          ? `Error: ${err.message}${err.cause ? ` (Cause: ${err.cause})` : ''}`
-          : 'An unexpected error occurred while fetching articles'
-      );
+      console.log('Attempting to fetch from articleStore...');
+      const fetchedArticles = await articleStore.getArticles();
+      console.log('Articles from store:', fetchedArticles);
+      setArticles(fetchedArticles);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      setError('Failed to fetch articles');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditArticle = (id: string) => {
+    router.push(`/admin/articles/edit/${id}`);
   };
 
   const handleDeleteArticle = async (id: string) => {
@@ -75,18 +46,13 @@ export default function AdminDashboard() {
     }
 
     try {
-      const response = await fetch(`/api/articles/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete article');
-      }
-
-      await fetchArticles();
+      await articleStore.deleteArticle(id);
+      // Remove the article from the local state
+      setArticles(articles.filter(article => article.id !== id));
+      alert('Article deleted successfully');
     } catch (error) {
       console.error('Error deleting article:', error);
-      alert('Failed to delete article');
+      alert('Failed to delete article. Please try again.');
     }
   };
 
@@ -101,6 +67,14 @@ export default function AdminDashboard() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">Error: {error}</div>
       </div>
     );
   }
@@ -176,12 +150,6 @@ export default function AdminDashboard() {
               </select>
             </div>
           </div>
-
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
 
           {/* Articles Table */}
           <div className="overflow-x-auto">
