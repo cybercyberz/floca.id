@@ -44,18 +44,11 @@ export async function PUT(
       );
     }
 
-    const success = await articleStore.updateArticle(params.id, {
+    await articleStore.updateArticle(params.id, {
       ...validatedData,
       id: params.id, // Ensure ID doesn't change
       date: existingArticle.date, // Keep the original date
     });
-
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Failed to update article' },
-        { status: 500 }
-      );
-    }
 
     return NextResponse.json({ message: 'Article updated successfully' });
   } catch (error) {
