@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { ArticleFormData } from '@/types/article';
+import { articleStore } from '@/lib/store';
 
 // Dynamically import ArticleForm with no SSR
 const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -35,29 +36,17 @@ export default function NewArticlePage() {
 
   const handleSubmit = async (data: ArticleFormData) => {
     try {
-      console.log('Creating article:', data);
-      const response = await fetch('/api/articles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const newArticle = {
+        ...data,
+        id: Date.now().toString(), // Generate a unique ID
+        date: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      };
 
-      const result = await response.json();
-      console.log('Server response:', result);
-
-      if (!response.ok) {
-        console.error('Server response:', result);
-        if (result.error === 'Validation failed') {
-          throw new Error(
-            'Validation failed: ' + 
-            result.details.map((err: any) => `${err.path}: ${err.message}`).join(', ')
-          );
-        }
-        throw new Error(result.error || 'Failed to create article');
-      }
-
+      articleStore.addArticle(newArticle);
       router.push('/admin');
       router.refresh();
     } catch (error) {
