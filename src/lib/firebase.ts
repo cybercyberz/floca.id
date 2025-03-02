@@ -1,8 +1,8 @@
 'use client';
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAnalytics, isSupported } from 'firebase/analytics';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
   // Your Firebase config object will go here
@@ -15,16 +15,43 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
+// Validate Firebase configuration
+const validateFirebaseConfig = () => {
+  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'] as const;
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+  
+  if (missingFields.length > 0) {
+    console.error('Missing required Firebase configuration fields:', missingFields);
+    throw new Error(`Missing required Firebase configuration fields: ${missingFields.join(', ')}`);
+  }
+};
 
-// Initialize Analytics and export it
-let analytics = null;
-if (typeof window !== 'undefined') {
-  // Only initialize analytics on the client side
-  isSupported().then(yes => yes && getAnalytics(app))
-    .catch(e => console.error('Error initializing analytics:', e));
+let app: FirebaseApp;
+let db: Firestore;
+let analytics: Analytics | null = null;
+
+try {
+  // Validate config before initialization
+  validateFirebaseConfig();
+  
+  // Initialize Firebase only if it hasn't been initialized already
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+  
+  // Initialize Firestore
+  db = getFirestore(app);
+  
+  // Initialize Analytics conditionally
+  if (typeof window !== 'undefined') {
+    // Only initialize analytics on the client side
+    isSupported().then(yes => yes && getAnalytics(app)).catch(err => {
+      console.warn('Failed to initialize analytics:', err);
+    });
+  }
+  
+  console.log('Firebase initialized successfully with project:', firebaseConfig.projectId);
+} catch (error) {
+  console.error('Error initializing Firebase:', error);
+  throw error;
 }
 
-export { db, analytics }; 
+export { app, db, analytics }; 
