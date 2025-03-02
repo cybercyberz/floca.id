@@ -1,134 +1,106 @@
 'use client';
 
-import { useState } from 'react';
-import NewsCard from '@/components/NewsCard';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import FeaturedArticle from '@/components/FeaturedArticle';
+import ArticleGrid from '@/components/ArticleGrid';
+import CategoryFilter from '@/components/CategoryFilter';
 
-function filterArticles(articles: Article[], category: string): Article[] {
-  return articles.filter((article: Article) => 
-    article.status === 'published' && 
-    (category === 'All' || article.category === category)
-  );
+function filterArticles(articles: Article[], category: string) {
+  const publishedArticles = articles.filter(article => article.status === 'published');
+  if (category === 'All') {
+    return publishedArticles;
+  }
+  return publishedArticles.filter(article => article.category === category);
 }
 
-export default function Home() {
+export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const articles = articleStore.getArticles();
-  const publishedArticles = filterArticles(articles, selectedCategory);
-  const featuredArticle = publishedArticles.find((article: Article) => article.featured) || publishedArticles[0];
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (articles.length === 0) {
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        setLoading(true);
+        setError(null);
+        const fetchedArticles = await articleStore.getArticles();
+        setArticles(fetchedArticles);
+      } catch (err) {
+        console.error('Error loading articles:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load articles');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadArticles();
+  }, []);
+
+  const publishedArticles = filterArticles(articles, selectedCategory);
+  const featuredArticle = publishedArticles.find(article => article.featured) || publishedArticles[0];
+  const nonFeaturedArticles = publishedArticles.filter(article => article !== featuredArticle);
+
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center text-gray-600">
-          No articles found. Create some articles in the admin dashboard.
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="animate-pulse">
+          <div className="h-96 bg-gray-200 rounded-lg mb-12"></div>
+          <div className="h-12 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="h-64 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Featured Article Section */}
-      {featuredArticle && (
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Featured Story</h2>
-          <Link href={`/articles/${featuredArticle.id}`} className="block">
-            <div className="relative h-[500px] rounded-xl overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
-              <Image
-                src={featuredArticle.imageUrl}
-                alt={featuredArticle.title}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 1200px) 100vw, 1200px"
-                priority
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
-                <span className="inline-block bg-blue-500 text-white text-sm px-3 py-1 rounded-full mb-3">
-                  {featuredArticle.category}
-                </span>
-                <h1 className="text-4xl font-bold mb-2 group-hover:text-blue-200 transition-colors">
-                  {featuredArticle.title}
-                </h1>
-                <p className="text-lg mb-4">
-                  {featuredArticle.excerpt}
-                </p>
-                <div className="flex items-center text-sm">
-                  <span>By {featuredArticle.author}</span>
-                  <span className="mx-2">•</span>
-                  <span>{featuredArticle.date}</span>
-                </div>
-              </div>
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
             </div>
-          </Link>
-        </section>
-      )}
-
-      {/* Latest News Grid with Category Filter */}
-      <section>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-          <h2 className="text-2xl font-bold text-gray-900">Latest News</h2>
-          <div className="flex flex-wrap gap-2">
-            {['All', 'Politics', 'Technology', 'Sports', 'Entertainment', 'Business'].map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  selectedCategory === category
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {publishedArticles
-            .filter((article: Article) => article.id !== featuredArticle?.id)
-            .map((article: Article) => (
-              <Link key={article.id} href={`/articles/${article.id}`}>
-                <NewsCard {...article} />
-              </Link>
-            ))}
-        </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* Trending Section */}
-      <section className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Trending Now</h2>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <ul className="space-y-4">
-            {publishedArticles
-              .slice(0, 5)
-              .map((article: Article, index: number) => (
-                <li key={article.id}>
-                  <Link 
-                    href={`/articles/${article.id}`}
-                    className="flex items-center space-x-4 group"
-                  >
-                    <span className="text-2xl font-bold text-blue-500 group-hover:text-blue-700">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <h3 className="font-medium text-gray-900 group-hover:text-blue-600">
-                        {article.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {article.date} • By {article.author}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-          </ul>
-        </div>
-      </section>
+  if (articles.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <p className="text-center text-gray-600">No articles found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {featuredArticle && <FeaturedArticle article={featuredArticle} />}
+      
+      <div className="mt-12">
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+      </div>
+
+      <div className="mt-8">
+        <ArticleGrid articles={nonFeaturedArticles} />
+      </div>
     </div>
   );
 }
