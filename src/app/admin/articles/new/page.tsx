@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import { useState } from 'react';
 
 // Dynamically import ArticleForm with no SSR
 const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -33,12 +34,16 @@ const testArticle: ArticleFormData = {
 
 export default function NewArticlePage() {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (data: ArticleFormData) => {
+    setIsSubmitting(true);
+    setError(null);
     try {
       const newArticle = {
         ...data,
-        id: Date.now().toString(), // Generate a unique ID
+        id: Date.now().toString(), // This will be replaced by Firestore's auto-generated ID
         date: new Date().toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -46,18 +51,29 @@ export default function NewArticlePage() {
         })
       };
 
-      articleStore.addArticle(newArticle);
+      await articleStore.addArticle(newArticle);
       router.push('/admin');
       router.refresh();
-    } catch (error) {
-      console.error('Error creating article:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error creating article:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while creating the article');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // Test function to create an article with valid data
-  const handleTestArticle = () => {
-    handleSubmit(testArticle);
+  const handleTestArticle = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await handleSubmit(testArticle);
+    } catch (err) {
+      console.error('Error creating test article:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while creating the test article');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -66,16 +82,25 @@ export default function NewArticlePage() {
         <h1 className="text-3xl font-bold text-gray-900">Create New Article</h1>
         <button
           onClick={handleTestArticle}
-          className="mt-4 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          disabled={isSubmitting}
+          className="mt-4 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
         >
-          Create Test Article
+          {isSubmitting ? 'Creating...' : 'Create Test Article'}
         </button>
       </div>
+
+      {error && (
+        <div className="mb-8 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <ArticleForm
             onSubmit={handleSubmit}
             onCancel={() => router.back()}
+            isSubmitting={isSubmitting}
           />
         </div>
       </div>

@@ -7,13 +7,14 @@ import ImageUpload from './ImageUpload';
 
 interface ArticleFormProps {
   article?: Article;
-  onSubmit: (data: ArticleFormData) => Promise<void>;
+  onSubmit: (data: ArticleFormData) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
 const categories = ['Politics', 'Technology', 'Sports', 'Entertainment', 'Business'];
 
-export default function ArticleForm({ article, onSubmit, onCancel }: ArticleFormProps) {
+export default function ArticleForm({ article, onSubmit, onCancel, isSubmitting }: ArticleFormProps) {
   const editorId = useId();
   const [formData, setFormData] = useState<ArticleFormData>({
     title: article?.title || '',
@@ -26,20 +27,16 @@ export default function ArticleForm({ article, onSubmit, onCancel }: ArticleForm
     featured: article?.featured || false,
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError('');
 
     try {
       await onSubmit(formData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
