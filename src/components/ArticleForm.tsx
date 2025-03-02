@@ -3,11 +3,20 @@
 import { useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { Editor } from '@tinymce/tinymce-react';
-import { CldUploadWidget, CloudinaryUploadWidgetResults } from 'next-cloudinary';
+import { CldUploadWidget } from 'next-cloudinary';
 
 interface ArticleFormProps {
   initialData?: Article;
   onSubmit: (data: ArticleFormData) => void;
+}
+
+interface CloudinaryInfo {
+  secure_url: string;
+}
+
+interface CloudinaryResult {
+  event: string;
+  info: CloudinaryInfo;
 }
 
 const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
@@ -39,8 +48,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
     setFormData(prev => ({ ...prev, content }));
   };
 
-  const handleImageUpload = (result: CloudinaryUploadWidgetResults) => {
-    if (result?.info && 'secure_url' in result.info) {
+  const handleImageUpload = (result: CloudinaryResult) => {
+    if (result.event === 'success') {
       setFormData(prev => ({
         ...prev,
         imageUrl: result.info.secure_url
@@ -103,7 +112,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
         <CldUploadWidget
           uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-          onUpload={handleImageUpload}
+          onUpload={handleImageUpload as any}
         >
           {({ open }: { open: () => void }) => (
             <div className="space-y-4">
