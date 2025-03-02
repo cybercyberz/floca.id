@@ -57,6 +57,11 @@ export default function EditArticlePage() {
       setIsSubmitting(true);
       setError(null);
       
+      // Validate imageUrl
+      if (!formData.imageUrl) {
+        console.warn('No image URL in form data');
+      }
+      
       // Ensure we're not sending an empty imageUrl
       const updatedArticle = {
         ...formData,
@@ -64,9 +69,15 @@ export default function EditArticlePage() {
         date: article?.date || new Date().toISOString()
       };
 
-      console.log('Updating article with data:', updatedArticle); // Debug log
+      console.log('Submitting article update with data:', {
+        id: params.id,
+        imageUrl: updatedArticle.imageUrl,
+        hasExistingImage: !!article?.imageUrl
+      });
+
       await articleStore.updateArticle(params.id as string, updatedArticle);
       
+      console.log('Article updated successfully');
       router.push('/admin/articles');
       toast.success('Article updated successfully');
     } catch (err) {
