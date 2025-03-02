@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
+import { Editor } from '@tinymce/tinymce-react';
+import { CldUploadWidget, CloudinaryUploadWidgetResults } from 'next-cloudinary';
 
 interface ArticleFormProps {
   initialData?: Article;
@@ -33,6 +35,19 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
     }));
   };
 
+  const handleEditorChange = (content: string) => {
+    setFormData(prev => ({ ...prev, content }));
+  };
+
+  const handleImageUpload = (result: CloudinaryUploadWidgetResults) => {
+    if (result?.info && 'secure_url' in result.info) {
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: result.info.secure_url
+      }));
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
@@ -62,29 +77,55 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">Content</label>
-        <textarea
-          name="content"
-          id="content"
+        <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+        <Editor
+          apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
           value={formData.content}
-          onChange={handleChange}
-          required
-          rows={10}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          init={{
+            height: 500,
+            menubar: false,
+            plugins: [
+              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks | ' +
+              'bold italic forecolor | alignleft aligncenter ' +
+              'alignright alignjustify | bullist numlist outdent indent | ' +
+              'removeformat | help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+          }}
+          onEditorChange={handleEditorChange}
         />
       </div>
 
       <div>
-        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
-        <input
-          type="url"
-          name="imageUrl"
-          id="imageUrl"
-          value={formData.imageUrl}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+        <CldUploadWidget
+          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+          onUpload={handleImageUpload}
+        >
+          {({ open }: { open: () => void }) => (
+            <div className="space-y-4">
+              {formData.imageUrl && (
+                <div className="mt-2">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    className="w-full max-w-md h-auto rounded-lg shadow-lg"
+                  />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => open()}
+                className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Upload Image
+              </button>
+            </div>
+          )}
+        </CldUploadWidget>
       </div>
 
       <div>
