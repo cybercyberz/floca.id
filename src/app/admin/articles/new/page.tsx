@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import dynamic from 'next/dynamic';
-import ArticleForm, { type ArticleFormProps } from '@/components/ArticleForm';
+import type { ArticleFormProps } from '@/components/ArticleForm';
 
 // Dynamically import ArticleForm with no SSR
 const DynamicArticleForm = dynamic(() => import('@/components/ArticleForm'), {
