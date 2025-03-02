@@ -1,11 +1,9 @@
 'use client';
 
-import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import { articleStore } from '@/lib/store';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { Article } from '@/types/article';
+import { articleStore } from '@/lib/store';
 
 export default function ArticlePage() {
   const params = useParams();
@@ -19,14 +17,13 @@ export default function ArticlePage() {
         setLoading(true);
         setError(null);
         const foundArticle = await articleStore.getArticle(params.id as string);
-        if (!foundArticle || foundArticle.status !== 'published') {
-          notFound();
-          return;
+        if (!foundArticle) {
+          throw new Error('Article not found');
         }
         setArticle(foundArticle);
       } catch (err) {
-        console.error('Error loading article:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load article');
+        console.error('Error fetching article:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -39,14 +36,8 @@ export default function ArticlePage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="aspect-video bg-gray-200 rounded mb-8"></div>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-          </div>
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
@@ -78,35 +69,27 @@ export default function ArticlePage() {
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{article.title}</h1>
-        <div className="flex items-center text-sm text-gray-500 space-x-4">
-          <span>{article.author}</span>
-          <span>•</span>
-          <span>{article.date}</span>
-          <span>•</span>
-          <span className="text-blue-600">{article.category}</span>
-        </div>
-      </header>
-
       {article.imageUrl && (
-        <div className="relative aspect-video mb-8">
-          <Image
+        <div className="mb-8">
+          <img
             src={article.imageUrl}
             alt={article.title}
-            fill
-            className="object-cover rounded-lg"
-            priority
+            className="w-full h-64 object-cover rounded-lg shadow-lg"
           />
         </div>
       )}
-
-      <div className="prose prose-lg max-w-none">
-        <p className="text-xl text-gray-500 mb-8 leading-relaxed">
-          {article.excerpt}
-        </p>
-        <div dangerouslySetInnerHTML={{ __html: article.content }} />
+      <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+      <div className="flex items-center text-gray-600 mb-8">
+        <span>{new Date(article.date).toLocaleDateString()}</span>
+        <span className="mx-2">•</span>
+        <span>{article.author}</span>
+        <span className="mx-2">•</span>
+        <span>{article.category}</span>
       </div>
+      <div 
+        className="prose prose-lg max-w-none"
+        dangerouslySetInnerHTML={{ __html: article.content }}
+      />
     </article>
   );
 } 
