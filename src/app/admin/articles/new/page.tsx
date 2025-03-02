@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import dynamic from 'next/dynamic';
-import type { ArticleFormProps } from '@/components/ArticleForm';
+import ArticleForm, { type ArticleFormProps } from '@/components/ArticleForm';
 
 // Dynamically import ArticleForm with no SSR
-const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
+const DynamicArticleForm = dynamic(() => import('@/components/ArticleForm'), {
   ssr: false,
   loading: () => (
     <div className="animate-pulse">
@@ -63,9 +63,9 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-2xl font-bold mb-6">Create New Article</h1>
-      <ArticleForm onSubmit={handleSubmit} />
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">New Article</h1>
+      <DynamicArticleForm onSubmit={handleSubmit} />
     </div>
   );
 } 
