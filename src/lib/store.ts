@@ -14,24 +14,43 @@ import {
   where,
   orderBy,
   limit,
-  DocumentData
+  DocumentData,
+  QuerySnapshot,
+  setDoc,
+  writeBatch
 } from 'firebase/firestore';
 
 // This is still a temporary in-memory store, but now it's shared across routes
 // In a production app, this should be replaced with a proper database
-class ArticleStore {
-  private collection = collection(db, 'articles');
+export class ArticleStore {
+  private articlesCollection = collection(db, 'articles');
+  private cache: Map<string, Article> = new Map();
+  private lastCacheUpdate: number = 0;
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  private isCacheValid(): boolean {
+    return Date.now() - this.lastCacheUpdate < this.CACHE_TTL;
+  }
+
+  private updateCacheTimestamp(): void {
+    this.lastCacheUpdate = Date.now();
+  }
 
   async getArticles(): Promise<Article[]> {
     try {
-      const querySnapshot = await getDocs(
-        query(this.collection, orderBy('date', 'desc'))
-      );
-      
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Article[];
+      // Always fetch fresh data in SSR
+      if (typeof window === 'undefined' || !this.isCacheValid()) {
+        this.clearCache();
+      }
+
+      const snapshot = await getDocs(this.articlesCollection);
+      const articles = snapshot.docs.map(doc => {
+        const article = { id: doc.id, ...doc.data() } as Article;
+        this.cache.set(doc.id, article);
+        return article;
+      });
+      this.updateCacheTimestamp();
+      return articles;
     } catch (error) {
       console.error('Error fetching articles:', error);
       throw error;
@@ -40,18 +59,26 @@ class ArticleStore {
 
   async getPublishedArticles(): Promise<Article[]> {
     try {
+      // Always fetch fresh data in SSR
+      if (typeof window === 'undefined' || !this.isCacheValid()) {
+        this.clearCache();
+      }
+
       const querySnapshot = await getDocs(
         query(
-          this.collection,
+          this.articlesCollection,
           where('status', '==', 'published'),
           orderBy('date', 'desc')
         )
       );
       
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Article[];
+      const articles = querySnapshot.docs.map(doc => {
+        const article = { id: doc.id, ...doc.data() } as Article;
+        this.cache.set(doc.id, article);
+        return article;
+      });
+      this.updateCacheTimestamp();
+      return articles;
     } catch (error) {
       console.error('Error fetching published articles:', error);
       throw error;
@@ -62,37 +89,43 @@ class ArticleStore {
     try {
       const querySnapshot = await getDocs(
         query(
-          this.collection,
+          this.articlesCollection,
           where('status', '==', 'published'),
           where('featured', '==', true),
-          orderBy('date', 'desc')
+          orderBy('date', 'desc'),
+          limit(limitCount)
         )
       );
       
-      return querySnapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Article[];
+      const articles = querySnapshot.docs.map(doc => {
+        const article = { id: doc.id, ...doc.data() } as Article;
+        this.cache.set(doc.id, article);
+        return article;
+      });
+      return articles;
     } catch (error) {
       console.error('Error fetching featured articles:', error);
       throw error;
     }
   }
 
-  async getArticleById(id: string): Promise<Article | null> {
+  async getArticle(id: string): Promise<Article | null> {
     try {
-      const docRef = doc(this.collection, id);
-      const docSnap = await getDoc(docRef);
-      
-      if (!docSnap.exists()) {
-        return null;
+      // Check cache first if we're in the browser and cache is valid
+      if (typeof window !== 'undefined' && this.isCacheValid() && this.cache.has(id)) {
+        return this.cache.get(id)!;
       }
 
-      return {
-        id: docSnap.id,
-        ...docSnap.data()
-      } as Article;
+      const docRef = doc(this.articlesCollection, id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const article = { id: docSnap.id, ...docSnap.data() } as Article;
+        this.cache.set(id, article);
+        this.updateCacheTimestamp();
+        return article;
+      }
+      return null;
     } catch (error) {
       console.error('Error fetching article:', error);
       throw error;
@@ -101,37 +134,60 @@ class ArticleStore {
 
   async createArticle(article: Omit<Article, 'id'>): Promise<Article> {
     try {
-      const docRef = await addDoc(this.collection, article);
-      return {
-        id: docRef.id,
-        ...article
-      };
+      const docRef = await addDoc(this.articlesCollection, article);
+      const newArticle = { id: docRef.id, ...article };
+      this.cache.set(docRef.id, newArticle);
+      return newArticle;
     } catch (error) {
       console.error('Error creating article:', error);
       throw error;
     }
   }
 
-  async updateArticle(id: string, article: Partial<Article>): Promise<boolean> {
+  async updateArticle(id: string, article: Partial<Article>): Promise<void> {
     try {
-      const docRef = doc(this.collection, id);
-      await updateDoc(docRef, article);
-      return true;
+      const docRef = doc(this.articlesCollection, id);
+      await setDoc(docRef, article, { merge: true });
+      
+      // Update cache
+      if (this.cache.has(id)) {
+        const existingArticle = this.cache.get(id)!;
+        this.cache.set(id, { ...existingArticle, ...article });
+      }
     } catch (error) {
       console.error('Error updating article:', error);
       throw error;
     }
   }
 
-  async deleteArticle(id: string): Promise<boolean> {
+  async deleteArticle(id: string): Promise<void> {
     try {
-      const docRef = doc(this.collection, id);
-      await deleteDoc(docRef);
-      return true;
+      console.log('Deleting article with ID:', id);
+      const docRef = doc(this.articlesCollection, id);
+      
+      // Create a batch
+      const batch = writeBatch(db);
+      
+      // Add delete operation to batch
+      batch.delete(docRef);
+      
+      // Commit the batch
+      await batch.commit();
+      
+      // Remove from cache
+      this.cache.delete(id);
+      
+      console.log('Article successfully deleted');
     } catch (error) {
       console.error('Error deleting article:', error);
       throw error;
     }
+  }
+
+  // Clear cache and reset timestamp
+  clearCache(): void {
+    this.cache.clear();
+    this.lastCacheUpdate = 0;
   }
 }
 
