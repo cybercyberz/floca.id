@@ -1,87 +1,94 @@
 'use client';
 
-import { notFound } from 'next/navigation';
-import NewsCard from '@/components/NewsCard';
-import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { articleStore } from '@/lib/store';
+import NewsCard from '@/components/NewsCard';
+import { useEffect, useState } from 'react';
+import { Article } from '@/types/article';
 
-const validCategories = ['politics', 'technology', 'sports', 'entertainment', 'business'];
+const validCategories = ['Politics', 'Technology', 'Sports', 'Entertainment', 'Business'];
 
-// Temporary mock data - will be replaced with actual API calls
-const getMockCategoryArticles = (category: string) => [
-  {
-    id: '1',
-    title: `Latest ${category.charAt(0).toUpperCase() + category.slice(1)} News`,
-    excerpt: `Important developments in the world of ${category}.`,
-    category: category.charAt(0).toUpperCase() + category.slice(1),
-    imageUrl: `https://picsum.photos/800/600?random=${category}1`,
-    date: 'Feb 28, 2024',
-    author: 'John Doe',
-  },
-  {
-    id: '2',
-    title: `Breaking ${category.charAt(0).toUpperCase() + category.slice(1)} Story`,
-    excerpt: `Another significant update in ${category}.`,
-    category: category.charAt(0).toUpperCase() + category.slice(1),
-    imageUrl: `https://picsum.photos/800/600?random=${category}2`,
-    date: 'Feb 28, 2024',
-    author: 'Jane Smith',
-  },
-  // Add more mock articles as needed
-];
+export default function CategoryPage() {
+  const params = useParams();
+  const category = (params.category as string).toLowerCase();
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function CategoryPage({ params }: { params: { category: string } }) {
-  const category = params.category.toLowerCase();
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        setLoading(true);
+        setError(null);
+        const allArticles = await articleStore.getArticles();
+        const filteredArticles = allArticles.filter(
+          article => 
+            article.status === 'published' &&
+            article.category.toLowerCase() === category
+        );
+        setArticles(filteredArticles);
+      } catch (err) {
+        console.error('Error loading articles:', err);
+        setError('Failed to load articles');
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  if (!validCategories.includes(category)) {
-    notFound();
+    loadArticles();
+  }, [category]);
+
+  // Check if the category is valid
+  if (!validCategories.map(c => c.toLowerCase()).includes(category)) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-3xl font-bold text-red-600 mb-4">Invalid Category</h1>
+        <p className="text-gray-600">
+          The category "{category}" does not exist. Please check the URL and try again.
+        </p>
+      </div>
+    );
   }
 
-  const articles = articleStore.getArticles().filter(
-    article => article.status === 'published' && 
-    article.category.toLowerCase() === category
-  );
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 capitalize mb-2">
-          {category} News
-        </h1>
-        <p className="text-gray-600">
-          Stay updated with the latest {category} news and developments
-        </p>
-      </header>
-
-      {/* Category Filters */}
-      <div className="mb-8">
-        <div className="flex flex-wrap gap-2">
-          {['Latest', 'Most Read', 'Featured', 'Trending'].map((filter) => (
-            <button
-              key={filter}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              {filter}
-            </button>
-          ))}
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="h-64 bg-gray-200 rounded"></div>
+            ))}
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Articles Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map((article) => (
-          <Link key={article.id} href={`/articles/${article.id}`}>
-            <NewsCard {...article} />
-          </Link>
-        ))}
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-3xl font-bold text-red-600 mb-4">Error</h1>
+        <p className="text-gray-600">{error}</p>
       </div>
+    );
+  }
 
-      {/* Load More Button */}
-      <div className="mt-8 text-center">
-        <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          Load More Articles
-        </button>
-      </div>
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8 capitalize">
+        {category} Articles
+      </h1>
+
+      {articles.length === 0 ? (
+        <p className="text-gray-600">No articles found in this category.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map((article) => (
+            <NewsCard key={article.id} article={article} />
+          ))}
+        </div>
+      )}
     </div>
   );
 } 
