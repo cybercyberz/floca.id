@@ -50,14 +50,20 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleImageUpload = (result: CloudinaryResult) => {
-    console.log('Cloudinary upload result:', result);
+    console.log('Cloudinary upload callback received:', result);
     if (result.event === 'success') {
       const imageUrl = result.info.secure_url;
-      console.log('Setting image URL:', imageUrl);
-      setFormData(prev => ({
-        ...prev,
-        imageUrl: imageUrl
-      }));
+      console.log('Setting image URL in form data:', imageUrl);
+      setFormData(prev => {
+        const updated = {
+          ...prev,
+          imageUrl: imageUrl
+        };
+        console.log('Updated form data:', updated);
+        return updated;
+      });
+    } else {
+      console.error('Upload event was not successful:', result);
     }
   };
 
