@@ -37,13 +37,16 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
     // Validate form data before submission
     const submissionData = {
       ...formData,
-      imageUrl: formData.imageUrl.trim() // Ensure no whitespace
+      // Only trim if imageUrl exists, otherwise keep as empty string
+      imageUrl: formData.imageUrl ? formData.imageUrl.trim() : ''
     };
 
     console.log('Submitting form with validated data:', submissionData);
     
     if (!submissionData.imageUrl) {
-      console.warn('Submitting without an image URL');
+      console.log('No new image URL provided - existing image will be preserved');
+    } else {
+      console.log('Submitting with image URL:', submissionData.imageUrl);
     }
 
     onSubmit(submissionData);
@@ -119,7 +122,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
               'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
               'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
               'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-              'paste', 'quickbars'
+              'quickbars'
             ],
             toolbar: [
               'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify',
@@ -206,21 +209,21 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
           onUpload={(result: any, widget: any) => {
             console.log('Raw upload result:', result);
             // Check if it's the success event and has info
-            if (result?.info) {
+            if (result?.event === 'success' && result?.info?.secure_url) {
               const imageUrl = result.info.secure_url;
-              console.log('Setting image URL:', imageUrl);
+              console.log('Setting image URL from Cloudinary:', imageUrl);
               setFormData(prev => {
                 const updated = {
                   ...prev,
                   imageUrl: imageUrl
                 };
-                console.log('Updated form data with image:', updated);
+                console.log('Updated form data with new image:', updated);
                 return updated;
               });
               // Close the widget after successful upload
-              if (widget) {
-                widget.close();
-              }
+              widget?.close();
+            } else {
+              console.warn('Invalid upload result from Cloudinary:', result);
             }
           }}
           options={{
