@@ -1,10 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import dynamic from 'next/dynamic';
 
 // Dynamically import ArticleForm with no SSR
 const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -21,16 +21,19 @@ const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
   ),
 });
 
-export default function EditArticlePage({ params }: { params: { id: string } }) {
+export default function EditArticlePage() {
+  const params = useParams();
   const router = useRouter();
   const [article, setArticle] = useState<Article | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchArticle = () => {
+    async function loadArticle() {
       try {
-        const foundArticle = articleStore.getArticleById(params.id);
+        setLoading(true);
+        setError(null);
+        const foundArticle = await articleStore.getArticleById(params.id as string);
         if (!foundArticle) {
           throw new Error('Article not found');
         }
@@ -39,77 +42,78 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
         console.error('Error fetching article:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
-    };
+    }
 
-    fetchArticle();
+    loadArticle();
   }, [params.id]);
 
-  const handleSubmit = async (data: ArticleFormData) => {
+  const handleSubmit = async (formData: ArticleFormData) => {
     try {
-      const success = articleStore.updateArticle(params.id, {
-        ...data,
-        id: params.id,
+      if (!article) return;
+      
+      const updatedArticle: Article = {
+        ...article,
+        ...formData,
         date: new Date().toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
         })
-      });
+      };
 
-      if (!success) {
-        throw new Error('Failed to update article');
-      }
-
-      router.push('/admin');
-      router.refresh();
-    } catch (error) {
-      console.error('Error updating article:', error);
-      throw error;
+      await articleStore.updateArticle(params.id as string, updatedArticle);
+      router.push('/admin/articles');
+    } catch (err) {
+      console.error('Error updating article:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update article');
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">Loading...</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   if (!article) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">Article not found</div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Article</h1>
-      </div>
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <ArticleForm
-            article={article}
-            onSubmit={handleSubmit}
-            onCancel={() => router.back()}
-          />
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Article</h1>
+      <ArticleForm 
+        article={article} 
+        onSubmit={handleSubmit} 
+        onCancel={() => router.push('/admin/articles')}
+      />
     </div>
   );
 } 
