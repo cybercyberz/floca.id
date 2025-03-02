@@ -59,12 +59,13 @@ export default function EditArticlePage() {
       
       // Validate imageUrl
       if (!formData.imageUrl) {
-        console.warn('No image URL in form data');
+        console.warn('No image URL in form data, using existing image if available');
       }
       
       // Ensure we're not sending an empty imageUrl
       const updatedArticle = {
         ...formData,
+        // Keep existing image URL if no new one is provided
         imageUrl: formData.imageUrl || article?.imageUrl || '',
         date: article?.date || new Date().toISOString()
       };
@@ -72,12 +73,13 @@ export default function EditArticlePage() {
       console.log('Submitting article update with data:', {
         id: params.id,
         imageUrl: updatedArticle.imageUrl,
-        hasExistingImage: !!article?.imageUrl
+        hasExistingImage: !!article?.imageUrl,
+        isNewImage: formData.imageUrl !== article?.imageUrl
       });
 
       await articleStore.updateArticle(params.id as string, updatedArticle);
       
-      console.log('Article updated successfully');
+      console.log('Article updated successfully with image:', updatedArticle.imageUrl);
       router.push('/admin/articles');
       toast.success('Article updated successfully');
     } catch (err) {
