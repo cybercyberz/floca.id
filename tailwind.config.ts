@@ -8,25 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      typography: {
-        DEFAULT: {
-          css: {
-            maxWidth: '65ch',
-            color: 'inherit',
-            a: {
-              color: '#3182ce',
-              '&:hover': {
-                color: '#2c5282',
-              },
-            },
-          },
-        },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
   },
   plugins: [
     require('@tailwindcss/typography'),
-    require('@tailwindcss/line-clamp'),
   ],
 };
 
