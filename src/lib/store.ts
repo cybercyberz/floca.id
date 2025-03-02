@@ -1,88 +1,168 @@
+'use client';
+
 import { Article } from '@/types/article';
+import { db } from './firebase';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc, 
+  query, 
+  where,
+  orderBy,
+  limit,
+  DocumentData
+} from 'firebase/firestore';
 
 // This is still a temporary in-memory store, but now it's shared across routes
 // In a production app, this should be replaced with a proper database
 class ArticleStore {
-  private static instance: ArticleStore;
-  private articles: Article[] = [
-    {
-      id: '1',
-      title: 'Breaking: Major Technology Breakthrough in Renewable Energy',
-      excerpt: 'Scientists have discovered a new method to improve solar panel efficiency by 40%, potentially revolutionizing renewable energy production.',
-      content: 'Full article content here...',
-      category: 'Technology',
-      imageUrl: 'https://picsum.photos/800/600?random=1',
-      date: 'Feb 28, 2024',
-      author: 'John Doe',
-      status: 'published',
-      featured: true
-    },
-    {
-      id: '2',
-      title: 'Global Economic Summit Addresses Climate Change',
-      excerpt: 'World leaders gather to discuss economic policies aimed at combating climate change and promoting sustainable development.',
-      content: 'Full article content here...',
-      category: 'Politics',
-      imageUrl: 'https://picsum.photos/800/600?random=2',
-      date: 'Feb 28, 2024',
-      author: 'Jane Smith',
-      status: 'draft',
-      featured: false
-    },
-  ];
+  private articles: Article[] = [];
+  private initialized: boolean = false;
+  private readonly COLLECTION_NAME = 'articles';
 
-  private constructor() {
-    console.log('ArticleStore initialized with articles:', this.articles);
+  constructor() {
+    console.log('ArticleStore initialized');
+    this.loadArticles();
   }
 
-  public static getInstance(): ArticleStore {
-    if (!ArticleStore.instance) {
-      ArticleStore.instance = new ArticleStore();
+  private async loadArticles() {
+    try {
+      const articlesRef = collection(db, this.COLLECTION_NAME);
+      const q = query(articlesRef, orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(q);
+      
+      this.articles = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as Article[];
+      
+      this.initialized = true;
+      console.log('Articles loaded from Firestore:', this.articles);
+    } catch (error) {
+      console.error('Error loading articles:', error);
+      throw error;
     }
-    return ArticleStore.instance;
   }
 
-  public getArticles(): Article[] {
-    console.log('Getting all articles:', this.articles);
+  public async addArticle(article: Omit<Article, 'id'>): Promise<Article> {
+    try {
+      const articlesRef = collection(db, this.COLLECTION_NAME);
+      const docRef = await addDoc(articlesRef, {
+        ...article,
+        date: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      });
+
+      const newArticle = { ...article, id: docRef.id } as Article;
+      this.articles.unshift(newArticle); // Add to start of array
+      console.log('Article added successfully:', newArticle);
+      return newArticle;
+    } catch (error) {
+      console.error('Error adding article:', error);
+      throw error;
+    }
+  }
+
+  public async updateArticle(id: string, updates: Partial<Article>): Promise<boolean> {
+    try {
+      const docRef = doc(db, this.COLLECTION_NAME, id);
+      await updateDoc(docRef, updates);
+      
+      const index = this.articles.findIndex(a => a.id === id);
+      if (index !== -1) {
+        this.articles[index] = { ...this.articles[index], ...updates };
+      }
+      
+      console.log('Article updated successfully:', id);
+      return true;
+    } catch (error) {
+      console.error('Error updating article:', error);
+      throw error;
+    }
+  }
+
+  public async deleteArticle(id: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, this.COLLECTION_NAME, id));
+      this.articles = this.articles.filter(article => article.id !== id);
+      console.log('Article deleted successfully:', id);
+      return true;
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      throw error;
+    }
+  }
+
+  public async getArticleById(id: string): Promise<Article | null> {
+    try {
+      const docRef = doc(db, this.COLLECTION_NAME, id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return { ...docSnap.data(), id: docSnap.id } as Article;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting article:', error);
+      throw error;
+    }
+  }
+
+  public async getArticles(): Promise<Article[]> {
+    if (!this.initialized) {
+      await this.loadArticles();
+    }
     return this.articles;
   }
 
-  public getArticleById(id: string): Article | undefined {
-    console.log(`Looking for article with id: ${id}`);
-    const article = this.articles.find(article => article.id === id);
-    console.log('Found article:', article);
-    return article;
-  }
-
-  public addArticle(article: Article): void {
-    console.log('Adding new article:', article);
-    this.articles.push(article);
-    console.log('Current articles:', this.articles);
-  }
-
-  public updateArticle(id: string, updatedArticle: Article): boolean {
-    console.log(`Updating article with id: ${id}`, updatedArticle);
-    const index = this.articles.findIndex(article => article.id === id);
-    if (index === -1) {
-      console.log('Article not found for update');
-      return false;
+  public async getPublishedArticles(): Promise<Article[]> {
+    try {
+      const articlesRef = collection(db, this.COLLECTION_NAME);
+      const q = query(
+        articlesRef,
+        where('status', '==', 'published'),
+        orderBy('date', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as Article[];
+    } catch (error) {
+      console.error('Error getting published articles:', error);
+      throw error;
     }
-    this.articles[index] = { ...updatedArticle, id }; // Ensure ID doesn't change
-    console.log('Article updated successfully');
-    return true;
   }
 
-  public deleteArticle(id: string): boolean {
-    console.log(`Deleting article with id: ${id}`);
-    const index = this.articles.findIndex(article => article.id === id);
-    if (index === -1) {
-      console.log('Article not found for deletion');
-      return false;
+  public async getFeaturedArticles(limitCount: number = 3): Promise<Article[]> {
+    try {
+      const articlesRef = collection(db, this.COLLECTION_NAME);
+      const q = query(
+        articlesRef,
+        where('status', '==', 'published'),
+        where('featured', '==', true),
+        orderBy('date', 'desc'),
+        limit(limitCount)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as Article[];
+    } catch (error) {
+      console.error('Error getting featured articles:', error);
+      throw error;
     }
-    this.articles.splice(index, 1);
-    console.log('Article deleted successfully');
-    return true;
   }
 }
 
-export const articleStore = ArticleStore.getInstance(); 
+export const articleStore = new ArticleStore(); 
