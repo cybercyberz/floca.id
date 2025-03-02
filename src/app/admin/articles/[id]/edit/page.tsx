@@ -6,6 +6,7 @@ import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import dynamic from 'next/dynamic';
 import type { ArticleFormProps } from '@/components/ArticleForm';
+import { toast } from 'react-hot-toast';
 
 // Dynamically import ArticleForm with no SSR
 const DynamicArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -28,6 +29,7 @@ export default function EditArticlePage() {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     async function loadArticle() {
@@ -52,22 +54,27 @@ export default function EditArticlePage() {
 
   const handleSubmit = async (formData: ArticleFormData) => {
     try {
-      if (!article) {
-        setError('No article found to update');
-        return;
-      }
+      setIsSubmitting(true);
+      setError(null);
       
-      const updatedArticle: Article = {
-        ...article,
+      // Ensure we're not sending an empty imageUrl
+      const updatedArticle = {
         ...formData,
-        date: new Date().toISOString()
+        imageUrl: formData.imageUrl || article?.imageUrl || '',
+        date: article?.date || new Date().toISOString()
       };
 
+      console.log('Updating article with data:', updatedArticle); // Debug log
       await articleStore.updateArticle(params.id as string, updatedArticle);
-      router.push('/admin');
+      
+      router.push('/admin/articles');
+      toast.success('Article updated successfully');
     } catch (err) {
       console.error('Error updating article:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update article');
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error('Failed to update article');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
