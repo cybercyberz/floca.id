@@ -8,7 +8,7 @@ interface ArticleFormProps {
   onSubmit: (data: ArticleFormData) => void;
 }
 
-const ArticleForm = ({ initialData, onSubmit }: ArticleFormProps) => {
+const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
   const [formData, setFormData] = useState<ArticleFormData>({
     title: initialData?.title || '',
     content: initialData?.content || '',
@@ -160,4 +160,5 @@ const ArticleForm = ({ initialData, onSubmit }: ArticleFormProps) => {
   );
 };
 
+export type { ArticleFormProps };
 export default ArticleForm; 
