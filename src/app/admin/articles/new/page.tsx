@@ -5,9 +5,10 @@ import { useState } from 'react';
 import { Article, ArticleFormData } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import dynamic from 'next/dynamic';
+import type { ArticleFormProps } from '@/components/ArticleForm';
 
 // Dynamically import ArticleForm with no SSR
-const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
+const ArticleForm = dynamic(() => import('@/components/ArticleForm').then(mod => mod.default), {
   ssr: false,
   loading: () => (
     <div className="animate-pulse">
@@ -30,15 +31,11 @@ export default function NewArticlePage() {
       setError(null);
       const newArticle: Omit<Article, 'id'> = {
         ...formData,
-        date: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
+        date: new Date().toISOString()
       };
 
       await articleStore.createArticle(newArticle);
-      router.push('/admin/articles');
+      router.push('/admin');
     } catch (err) {
       console.error('Error creating article:', err);
       setError(err instanceof Error ? err.message : 'Failed to create article');
@@ -66,12 +63,9 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Article</h1>
-      <ArticleForm 
-        onSubmit={handleSubmit}
-        onCancel={() => router.push('/admin/articles')}
-      />
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-2xl font-bold mb-6">Create New Article</h1>
+      <ArticleForm onSubmit={handleSubmit} />
     </div>
   );
 } 
