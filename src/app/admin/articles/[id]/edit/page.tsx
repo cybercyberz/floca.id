@@ -57,15 +57,9 @@ export default function EditArticlePage() {
       setIsSubmitting(true);
       setError(null);
       
-      // Validate imageUrl
-      if (!formData.imageUrl) {
-        console.warn('No image URL in form data, using existing image if available');
-      }
-      
-      // Ensure we're not sending an empty imageUrl
+      // Ensure we're not overwriting existing image URL with empty string
       const updatedArticle = {
         ...formData,
-        // Keep existing image URL if no new one is provided
         imageUrl: formData.imageUrl || article?.imageUrl || '',
         date: article?.date || new Date().toISOString()
       };
