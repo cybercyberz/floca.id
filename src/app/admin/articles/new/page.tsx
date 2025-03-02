@@ -1,10 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { ArticleFormData } from '@/types/article';
-import { articleStore } from '@/lib/store';
 import { useState } from 'react';
+import { Article, ArticleFormData } from '@/types/article';
+import { articleStore } from '@/lib/store';
+import dynamic from 'next/dynamic';
 
 // Dynamically import ArticleForm with no SSR
 const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
@@ -21,29 +21,15 @@ const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
   ),
 });
 
-const testArticle: ArticleFormData = {
-  title: "Test Article Title",
-  excerpt: "This is a test article excerpt that meets the minimum length requirement.",
-  content: "This is the main content of the test article. It needs to be at least 50 characters long to pass validation. This text should be sufficient.",
-  category: "Technology",
-  imageUrl: "https://picsum.photos/800/600?random=3",
-  author: "Test Author",
-  status: "draft",
-  featured: false
-};
-
 export default function NewArticlePage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (data: ArticleFormData) => {
-    setIsSubmitting(true);
-    setError(null);
+  const handleSubmit = async (formData: ArticleFormData) => {
     try {
-      const newArticle = {
-        ...data,
-        id: Date.now().toString(), // This will be replaced by Firestore's auto-generated ID
+      setError(null);
+      const newArticle: Omit<Article, 'id'> = {
+        ...formData,
         date: new Date().toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
@@ -51,59 +37,41 @@ export default function NewArticlePage() {
         })
       };
 
-      await articleStore.addArticle(newArticle);
-      router.push('/admin');
-      router.refresh();
+      await articleStore.createArticle(newArticle);
+      router.push('/admin/articles');
     } catch (err) {
       console.error('Error creating article:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while creating the article');
-    } finally {
-      setIsSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Failed to create article');
     }
   };
 
-  // Test function to create an article with valid data
-  const handleTestArticle = async () => {
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      await handleSubmit(testArticle);
-    } catch (err) {
-      console.error('Error creating test article:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while creating the test article');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Article</h1>
-        <button
-          onClick={handleTestArticle}
-          disabled={isSubmitting}
-          className="mt-4 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Creating...' : 'Create Test Article'}
-        </button>
-      </div>
-
-      {error && (
-        <div className="mb-8 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <ArticleForm
-            onSubmit={handleSubmit}
-            onCancel={() => router.back()}
-            isSubmitting={isSubmitting}
-          />
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Article</h1>
+      <ArticleForm 
+        onSubmit={handleSubmit}
+        onCancel={() => router.push('/admin/articles')}
+      />
     </div>
   );
 } 
