@@ -1,61 +1,88 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { Article } from '@/types/article';
 import NewsCard from '@/components/NewsCard';
+import Link from 'next/link';
 
-// Temporary mock search results - will be replaced with actual API calls
-const mockSearchResults = [
+// Mock search results for now - will be replaced with actual search functionality
+const mockSearchResults: Article[] = [
   {
     id: '1',
-    title: 'Search Result: Technology Innovation',
-    excerpt: 'Latest developments in technology sector showing promising results.',
+    title: 'The Future of AI in Healthcare',
+    excerpt: 'Exploring how artificial intelligence is revolutionizing medical diagnosis and treatment.',
+    content: 'Full article content here...',
     category: 'Technology',
-    imageUrl: 'https://picsum.photos/800/600?random=10',
-    date: 'Feb 28, 2024',
-    author: 'John Doe',
+    imageUrl: '/images/ai-healthcare.jpg',
+    date: 'Mar 15, 2024',
+    author: 'Dr. Sarah Chen',
+    status: 'published',
+    featured: false
   },
   {
     id: '2',
-    title: 'Search Result: Political Updates',
-    excerpt: 'Recent political developments and their impact on global affairs.',
+    title: 'Global Climate Summit 2024',
+    excerpt: 'World leaders gather to discuss urgent climate action and sustainable solutions.',
+    content: 'Full article content here...',
     category: 'Politics',
-    imageUrl: 'https://picsum.photos/800/600?random=11',
-    date: 'Feb 28, 2024',
-    author: 'Jane Smith',
+    imageUrl: '/images/climate-summit.jpg',
+    date: 'Mar 14, 2024',
+    author: 'James Wilson',
+    status: 'published',
+    featured: false
   },
+  {
+    id: '3',
+    title: 'The Rise of Remote Work Culture',
+    excerpt: 'How companies are adapting to the permanent shift towards flexible work arrangements.',
+    content: 'Full article content here...',
+    category: 'Business',
+    imageUrl: '/images/remote-work.jpg',
+    date: 'Mar 13, 2024',
+    author: 'Emma Rodriguez',
+    status: 'published',
+    featured: false
+  }
 ];
 
 export default function SearchPage() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement actual search functionality
+    console.log('Searching for:', searchQuery);
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Search Results for "{query}"
-        </h1>
-        <p className="text-gray-600">
-          Found {mockSearchResults.length} results matching your search
-        </p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Search Articles</h1>
+
+      <form onSubmit={handleSearch} className="mb-12">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for articles..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            type="submit"
+            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Search
+          </button>
+        </div>
+      </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {mockSearchResults.map((article) => (
-          <NewsCard key={article.id} {...article} />
+          <Link key={article.id} href={`/articles/${article.id}`}>
+            <NewsCard article={article} />
+          </Link>
         ))}
       </div>
-
-      {mockSearchResults.length === 0 && (
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            No results found
-          </h2>
-          <p className="text-gray-600">
-            Try adjusting your search terms or browse our categories
-          </p>
-        </div>
-      )}
     </div>
   );
 } 
