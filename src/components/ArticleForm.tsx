@@ -33,6 +33,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submitting form with data:', formData);
     onSubmit(formData);
   };
 
@@ -49,10 +50,13 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleImageUpload = (result: CloudinaryResult) => {
+    console.log('Cloudinary upload result:', result);
     if (result.event === 'success') {
+      const imageUrl = result.info.secure_url;
+      console.log('Setting image URL:', imageUrl);
       setFormData(prev => ({
         ...prev,
-        imageUrl: result.info.secure_url
+        imageUrl: imageUrl
       }));
     }
   };

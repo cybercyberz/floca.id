@@ -18,6 +18,7 @@ export default function ArticlePage() {
         setLoading(true);
         setError(null);
         const foundArticle = await articleStore.getArticle(params.id as string);
+        console.log('Loaded article:', foundArticle);
         if (!foundArticle) {
           throw new Error('Article not found');
         }
@@ -67,6 +68,8 @@ export default function ArticlePage() {
   if (!article) {
     return null;
   }
+
+  console.log('Rendering article with imageUrl:', article.imageUrl);
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
