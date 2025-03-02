@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import type { ArticleFormProps } from '@/components/ArticleForm';
 
 // Dynamically import ArticleForm with no SSR
-const ArticleForm = dynamic(() => import('@/components/ArticleForm').then(mod => mod.default), {
+const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
   ssr: false,
   loading: () => (
     <div className="animate-pulse">
