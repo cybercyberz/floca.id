@@ -24,13 +24,18 @@ export default function AdminDashboard() {
     setError(null);
     try {
       console.log('Starting to fetch articles...');
-      console.log('Attempting to fetch from articleStore...');
+      
+      // Clear cache before fetching to ensure fresh data
+      articleStore.clearCache();
+      console.log('Cache cleared, fetching fresh data...');
+      
       const fetchedArticles = await articleStore.getArticles();
-      console.log('Articles from store:', fetchedArticles);
+      console.log('Articles fetched successfully:', fetchedArticles.length);
+      
       setArticles(fetchedArticles);
     } catch (error) {
       console.error('Error fetching articles:', error);
-      setError('Failed to fetch articles');
+      setError('Failed to fetch articles. Please try refreshing the page.');
     } finally {
       setIsLoading(false);
     }
@@ -46,13 +51,27 @@ export default function AdminDashboard() {
     }
 
     try {
+      setIsLoading(true);
+      setError(null);
+      console.log('Attempting to delete article:', id);
+      
       await articleStore.deleteArticle(id);
-      // Remove the article from the local state
-      setArticles(articles.filter(article => article.id !== id));
+      console.log('Article deleted, clearing cache...');
+      
+      // Clear the store cache and refetch articles
+      articleStore.clearCache();
+      console.log('Cache cleared, refetching articles...');
+      
+      await fetchArticles();
+      console.log('Articles refetched successfully');
+      
       alert('Article deleted successfully');
     } catch (error) {
       console.error('Error deleting article:', error);
+      setError('Failed to delete article. Please try again.');
       alert('Failed to delete article. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
