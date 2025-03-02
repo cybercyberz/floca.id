@@ -24,8 +24,10 @@ class ArticleStore {
 
   async getArticles(): Promise<Article[]> {
     try {
-      const q = query(this.collection, orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(
+        query(this.collection, orderBy('date', 'desc'))
+      );
+      
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -38,12 +40,14 @@ class ArticleStore {
 
   async getPublishedArticles(): Promise<Article[]> {
     try {
-      const q = query(
-        this.collection,
-        where('status', '==', 'published'),
-        orderBy('date', 'desc')
+      const querySnapshot = await getDocs(
+        query(
+          this.collection,
+          where('status', '==', 'published'),
+          orderBy('date', 'desc')
+        )
       );
-      const querySnapshot = await getDocs(q);
+      
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -56,18 +60,20 @@ class ArticleStore {
 
   async getFeaturedArticles(limitCount: number = 5): Promise<Article[]> {
     try {
-      const q = query(
-        this.collection,
-        where('status', '==', 'published'),
-        where('featured', '==', true),
-        orderBy('date', 'desc'),
-        limit(limitCount)
+      const querySnapshot = await getDocs(
+        query(
+          this.collection,
+          where('status', '==', 'published'),
+          where('featured', '==', true),
+          orderBy('date', 'desc')
+        )
       );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Article[];
+      
+      return querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Article[];
     } catch (error) {
       console.error('Error fetching featured articles:', error);
       throw error;
@@ -93,10 +99,13 @@ class ArticleStore {
     }
   }
 
-  async createArticle(article: Omit<Article, 'id'>): Promise<string> {
+  async createArticle(article: Omit<Article, 'id'>): Promise<Article> {
     try {
       const docRef = await addDoc(this.collection, article);
-      return docRef.id;
+      return {
+        id: docRef.id,
+        ...article
+      };
     } catch (error) {
       console.error('Error creating article:', error);
       throw error;
