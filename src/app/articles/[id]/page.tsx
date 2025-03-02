@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import Image from 'next/image';
 
 export default function ArticlePage() {
   const params = useParams();
@@ -70,25 +71,39 @@ export default function ArticlePage() {
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {article.imageUrl && (
-        <div className="mb-8">
-          <img
+        <div className="relative w-full h-[400px] mb-8 rounded-lg overflow-hidden">
+          <Image
             src={article.imageUrl}
             alt={article.title}
-            className="w-full h-64 object-cover rounded-lg shadow-lg"
+            fill
+            priority
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       )}
-      <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
-      <div className="flex items-center text-gray-600 mb-8">
-        <span>{new Date(article.date).toLocaleDateString()}</span>
-        <span className="mx-2">•</span>
-        <span>{article.author}</span>
-        <span className="mx-2">•</span>
-        <span>{article.category}</span>
-      </div>
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+        <div className="flex items-center text-gray-600">
+          <span>{new Date(article.date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}</span>
+          <span className="mx-2">•</span>
+          <span>{article.author}</span>
+          <span className="mx-2">•</span>
+          <span>{article.category}</span>
+        </div>
+      </header>
       <div 
-        className="prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: article.content }}
+        className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg prose-img:shadow-lg"
+        dangerouslySetInnerHTML={{ 
+          __html: article.content.replace(
+            /<img(.*?)src="(.*?)"(.*?)>/g, 
+            (match, p1, src, p3) => `<img${p1}src="${src}"${p3} class="w-full h-auto rounded-lg shadow-lg">`
+          )
+        }}
       />
     </article>
   );

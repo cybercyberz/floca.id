@@ -92,17 +92,86 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
           value={formData.content}
           init={{
             height: 500,
-            menubar: false,
+            menubar: true,
             plugins: [
               'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
               'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
+              'paste', 'quickbars'
             ],
-            toolbar: 'undo redo | blocks | ' +
-              'bold italic forecolor | alignleft aligncenter ' +
-              'alignright alignjustify | bullist numlist outdent indent | ' +
-              'removeformat | help',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+            toolbar: [
+              'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify',
+              'bullist numlist outdent indent | removeformat | image media link | help'
+            ].join(' | '),
+            content_style: `
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+                font-size: 16px;
+                line-height: 1.6;
+                color: #374151;
+              }
+              p { margin: 0 0 1em 0; }
+              h1, h2, h3, h4, h5, h6 { 
+                font-weight: 600;
+                line-height: 1.25;
+                margin: 1.5em 0 0.5em 0;
+              }
+              h1 { font-size: 2em; }
+              h2 { font-size: 1.5em; }
+              h3 { font-size: 1.25em; }
+              img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              }
+              ul, ol {
+                margin: 0 0 1em 0;
+                padding-left: 2em;
+              }
+              li { margin: 0.5em 0; }
+              a { color: #2563eb; }
+              blockquote {
+                margin: 1em 0;
+                padding-left: 1em;
+                border-left: 4px solid #e5e7eb;
+                font-style: italic;
+              }
+            `,
+            formats: {
+              h1: { block: 'h1' },
+              h2: { block: 'h2' },
+              h3: { block: 'h3' },
+              h4: { block: 'h4' },
+              h5: { block: 'h5' },
+              h6: { block: 'h6' }
+            },
+            quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote',
+            quickbars_insert_toolbar: 'image media table',
+            automatic_uploads: true,
+            images_upload_handler: async (blobInfo: { blob: Blob }) => {
+              // Here you can implement image upload to your server/Cloudinary
+              // For now, we'll use base64
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(blobInfo.blob);
+              });
+            },
+            paste_data_images: true,
+            image_advtab: true,
+            image_dimensions: false,
+            image_class_list: [
+              { title: 'Responsive', value: 'w-full h-auto rounded-lg shadow-lg' }
+            ],
+            style_formats: [
+              { title: 'Paragraph', format: 'p' },
+              { title: 'Heading 1', format: 'h1' },
+              { title: 'Heading 2', format: 'h2' },
+              { title: 'Heading 3', format: 'h3' },
+              { title: 'Heading 4', format: 'h4' },
+              { title: 'Quote', format: 'blockquote' }
+            ]
           }}
           onEditorChange={handleEditorChange}
         />
