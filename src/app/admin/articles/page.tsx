@@ -11,38 +11,34 @@ export default function ArticlesAdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadArticles() {
-      try {
-        setLoading(true);
-        setError(null);
-        const fetchedArticles = await articleStore.getArticles();
-        // Sort articles by date, newest first
-        const sortedArticles = fetchedArticles.sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setArticles(sortedArticles);
-      } catch (err) {
-        console.error('Error loading articles:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load articles');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadArticles();
   }, []);
 
-  const handleDelete = async (articleId: string) => {
+  async function loadArticles() {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedArticles = await articleStore.getArticles();
+      setArticles(fetchedArticles);
+    } catch (err) {
+      console.error('Error loading articles:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load articles');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this article?')) {
       return;
     }
 
     try {
-      await articleStore.deleteArticle(articleId);
-      setArticles(articles.filter(article => article.id !== articleId));
+      await articleStore.deleteArticle(id);
+      await loadArticles(); // Reload the list after deletion
     } catch (err) {
       console.error('Error deleting article:', err);
-      alert('Failed to delete article. Please try again.');
+      alert(err instanceof Error ? err.message : 'Failed to delete article');
     }
   };
 
