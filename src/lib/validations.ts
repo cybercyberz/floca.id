@@ -9,7 +9,7 @@ export const articleSchema = z.object({
     .max(200, 'Excerpt must be less than 200 characters'),
   content: z.string()
     .min(50, 'Content must be at least 50 characters'),
-  category: z.enum(['Politics', 'Technology', 'Sports', 'Entertainment', 'Business']),
+  category: z.string().min(1, 'Category is required'),
   imageUrl: z.string()
     .url('Please provide a valid image URL'),
   author: z.string()
