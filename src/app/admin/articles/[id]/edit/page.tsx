@@ -63,7 +63,6 @@ export default function EditArticlePage() {
       // Ensure we're not overwriting existing image URL with empty string
       const updatedArticle = {
         ...formData,
-        imgUrl: formData.imageUrl || article?.imageUrl || '',
         imageUrl: formData.imageUrl || article?.imageUrl || '',
         date: article?.date || new Date().toISOString()
       };
@@ -73,13 +72,11 @@ export default function EditArticlePage() {
         formImageUrl: formData.imageUrl,
         existingImageUrl: article?.imageUrl,
         finalImageUrl: updatedArticle.imageUrl,
-        finalImgUrl: updatedArticle.imgUrl,
         hasImageChanged: formData.imageUrl !== article?.imageUrl
       });
 
-      if (!updatedArticle.imgUrl && article?.imageUrl) {
+      if (!updatedArticle.imageUrl && article?.imageUrl) {
         console.log('Preserving existing image URL:', article.imageUrl);
-        updatedArticle.imgUrl = article.imageUrl;
         updatedArticle.imageUrl = article.imageUrl;
       }
 
