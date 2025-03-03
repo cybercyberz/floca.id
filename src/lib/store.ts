@@ -72,12 +72,13 @@ export class ArticleStore {
     category?: string,
     limit?: number 
   } = {}): Promise<Article[]> {
-    if (!this.shouldRefreshCache() && this.cache.size > 0) {
-      return Array.from(this.cache.values());
-    }
-
     try {
-      let q = collection(db, 'articles');
+      if (this.lastFetch > 0 && !this.shouldRefreshCache()) {
+        // Return cached articles if they're still fresh
+        return Array.from(this.cache.values());
+      }
+
+      const articlesRef = collection(db, 'articles');
       const conditions = [];
 
       if (options.status) {
@@ -96,7 +97,7 @@ export class ArticleStore {
         conditions.push(limit(options.limit));
       }
 
-      q = query(q, ...conditions);
+      const q = query(articlesRef, ...conditions);
       const querySnapshot = await getDocs(q);
       
       this.clearCache();
