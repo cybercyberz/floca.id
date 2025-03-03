@@ -1,106 +1,68 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Article, ArticleFormData } from '@/types/article';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import ArticleForm from '@/components/ArticleForm';
 import { articleStore } from '@/lib/store';
-import dynamic from 'next/dynamic';
-import type { ArticleFormProps } from '@/components/ArticleForm';
-import { toast } from 'react-hot-toast';
+import { Article, ArticleFormData } from '@/types/article';
 
-// Dynamically import ArticleForm with no SSR
-const DynamicArticleForm = dynamic(() => import('@/components/ArticleForm'), {
-  ssr: false,
-  loading: () => (
-    <div className="animate-pulse">
-      <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-      <div className="space-y-4">
-        <div className="h-10 bg-gray-200 rounded"></div>
-        <div className="h-20 bg-gray-200 rounded"></div>
-        <div className="h-40 bg-gray-200 rounded"></div>
-      </div>
-    </div>
-  ),
-});
+interface EditArticlePageProps {
+  params: {
+    id: string;
+  };
+}
 
-export default function EditArticlePage() {
-  const params = useParams();
+export default function EditArticlePage({ params }: EditArticlePageProps) {
   const router = useRouter();
   const [article, setArticle] = useState<Article | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadArticle() {
+    const fetchArticle = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const foundArticle = await articleStore.getArticle(params.id as string);
-        if (!foundArticle) {
-          throw new Error('Article not found');
+        const fetchedArticle = await articleStore.getArticleById(params.id);
+        if (!fetchedArticle) {
+          setError('Article not found');
+          return;
         }
-        setArticle(foundArticle);
-      } catch (err) {
-        console.error('Error fetching article:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setArticle(fetchedArticle);
+      } catch (error) {
+        console.error('Error fetching article:', error);
+        setError('Failed to load article');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
-    }
+    };
 
-    loadArticle();
+    fetchArticle();
   }, [params.id]);
 
-  const handleSubmit = async (formData: ArticleFormData) => {
+  const handleSubmit = async (data: ArticleFormData) => {
     try {
       setIsSubmitting(true);
-      setError(null);
-      
-      console.log('Starting article update with form data:', JSON.stringify(formData, null, 2));
-      console.log('Current article data:', JSON.stringify(article, null, 2));
-
-      // Ensure we're not overwriting existing image URL with empty string
-      const updatedArticle = {
-        ...formData,
-        imageUrl: formData.imageUrl || article?.imageUrl || '',
-        date: article?.date || new Date().toISOString()
-      };
-
-      console.log('Article update preparation:', {
-        id: params.id,
-        formImageUrl: formData.imageUrl,
-        existingImageUrl: article?.imageUrl,
-        finalImageUrl: updatedArticle.imageUrl,
-        hasImageChanged: formData.imageUrl !== article?.imageUrl
-      });
-
-      if (!updatedArticle.imageUrl && article?.imageUrl) {
-        console.log('Preserving existing image URL:', article.imageUrl);
-        updatedArticle.imageUrl = article.imageUrl;
-      }
-
-      console.log('Sending article update to Firebase:', JSON.stringify(updatedArticle, null, 2));
-      await articleStore.updateArticle(params.id as string, updatedArticle);
-      
-      console.log('Article update successful');
-      router.push('/admin/articles');
-      toast.success('Article updated successfully');
-    } catch (err) {
-      console.error('Error updating article:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      toast.error('Failed to update article');
+      await articleStore.updateArticle(params.id, data);
+      router.push('/admin');
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating article:', error);
+      alert('Failed to update article. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-40 bg-gray-200 rounded"></div>
+          </div>
         </div>
       </div>
     );
@@ -108,7 +70,7 @@ export default function EditArticlePage() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="bg-red-50 border-l-4 border-red-400 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -132,10 +94,11 @@ export default function EditArticlePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Edit Article</h1>
-      <DynamicArticleForm
+      <h1 className="text-3xl font-bold mb-8">Edit Article</h1>
+      <ArticleForm
         initialData={article}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
