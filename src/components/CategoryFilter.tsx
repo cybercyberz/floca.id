@@ -1,16 +1,16 @@
+import { ALL_CATEGORIES } from '@/types/article';
+
 interface CategoryFilterProps {
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
 }
-
-const categories = ['All', 'Politics', 'Technology', 'Sports', 'Entertainment', 'Business'];
 
 export default function CategoryFilter({ selectedCategory, onSelectCategory }: CategoryFilterProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
       <h2 className="text-2xl font-bold text-gray-900">Latest News</h2>
       <div className="flex flex-wrap gap-2">
-        {categories.map(category => (
+        {ALL_CATEGORIES.map(category => (
           <button
             key={category}
             onClick={() => onSelectCategory(category)}
