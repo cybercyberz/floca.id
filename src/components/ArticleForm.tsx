@@ -244,7 +244,6 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
             setFormData(prev => {
               const updated = {
                 ...prev,
-                imgUrl: cleanImageUrl,
                 imageUrl: cleanImageUrl
               };
               console.log('Updated form data with new image:', JSON.stringify(updated, null, 2));
