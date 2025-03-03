@@ -12,6 +12,16 @@ const nextConfig = {
       }
     ],
   },
+  webpack: (config) => {
+    // Add polyfills for Node.js core modules
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      os: false,
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
