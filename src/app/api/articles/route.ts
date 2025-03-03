@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Article, NewArticle } from '@/types/article';
+import { ArticleFormData } from '@/types/article';
 import { articleSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 import { articleStore } from '@/lib/store';
@@ -27,16 +27,9 @@ export async function POST(request: Request) {
       const validatedData = articleSchema.parse(body);
       console.log('Validation successful:', validatedData);
       
-      const newArticle: NewArticle = {
-        ...validatedData,
-        date: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        }),
-      };
-
-      const createdArticle = await articleStore.createArticle(newArticle);
+      // ArticleStore.createArticle now handles timestamps
+      const createdArticle = await articleStore.createArticle(validatedData);
+      
       console.log('Article created successfully:', createdArticle);
       return NextResponse.json(createdArticle, { status: 201 });
     } catch (validationError) {
