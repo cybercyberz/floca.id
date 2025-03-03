@@ -151,7 +151,7 @@ export default function ArticlesAdminPage() {
                     <div className="text-sm text-gray-900">{article.category}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{article.date}</div>
+                    <div className="text-sm text-gray-900">{article.createdAt.toLocaleDateString()}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">

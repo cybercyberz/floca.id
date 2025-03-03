@@ -40,7 +40,7 @@ export default function FeaturedArticle({ article }: FeaturedArticleProps) {
             <div className="flex items-center text-sm">
               <span>By {article.author}</span>
               <span className="mx-2">•</span>
-              <span>{article.date}</span>
+              <span>{article.createdAt.toLocaleDateString()}</span>
             </div>
           </div>
         </div>
