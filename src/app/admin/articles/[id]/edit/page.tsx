@@ -57,29 +57,36 @@ export default function EditArticlePage() {
       setIsSubmitting(true);
       setError(null);
       
+      console.log('Starting article update with form data:', JSON.stringify(formData, null, 2));
+      console.log('Current article data:', JSON.stringify(article, null, 2));
+
       // Ensure we're not overwriting existing image URL with empty string
       const updatedArticle = {
         ...formData,
+        imgUrl: formData.imageUrl || article?.imageUrl || '',
         imageUrl: formData.imageUrl || article?.imageUrl || '',
         date: article?.date || new Date().toISOString()
       };
 
-      console.log('Submitting article update with data:', {
+      console.log('Article update preparation:', {
         id: params.id,
-        imageUrl: updatedArticle.imageUrl,
-        hasExistingImage: !!article?.imageUrl,
-        isNewImage: formData.imageUrl !== article?.imageUrl,
-        fullData: updatedArticle
+        formImageUrl: formData.imageUrl,
+        existingImageUrl: article?.imageUrl,
+        finalImageUrl: updatedArticle.imageUrl,
+        finalImgUrl: updatedArticle.imgUrl,
+        hasImageChanged: formData.imageUrl !== article?.imageUrl
       });
 
-      if (!updatedArticle.imageUrl && article?.imageUrl) {
+      if (!updatedArticle.imgUrl && article?.imageUrl) {
         console.log('Preserving existing image URL:', article.imageUrl);
+        updatedArticle.imgUrl = article.imageUrl;
         updatedArticle.imageUrl = article.imageUrl;
       }
 
+      console.log('Sending article update to Firebase:', JSON.stringify(updatedArticle, null, 2));
       await articleStore.updateArticle(params.id as string, updatedArticle);
       
-      console.log('Article updated successfully with image:', updatedArticle.imageUrl);
+      console.log('Article update successful');
       router.push('/admin/articles');
       toast.success('Article updated successfully');
     } catch (err) {
