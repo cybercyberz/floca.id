@@ -213,7 +213,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
               const imageUrl = result.info.secure_url;
               console.log('Setting image URL from Cloudinary:', imageUrl);
               
-              // Ensure the URL is properly formatted
+              // Ensure the URL is properly formatted and trimmed
               const cleanImageUrl = imageUrl.trim();
               
               setFormData(prev => {
@@ -224,6 +224,10 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
                 console.log('Updated form data with new image:', updated);
                 return updated;
               });
+
+              // Trigger form validation if needed
+              const event = new Event('change', { bubbles: true });
+              document.getElementById('imageUrl')?.dispatchEvent(event);
               
               // Close the widget after successful upload
               if (widget) {
