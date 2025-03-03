@@ -68,8 +68,14 @@ export default function EditArticlePage() {
         id: params.id,
         imageUrl: updatedArticle.imageUrl,
         hasExistingImage: !!article?.imageUrl,
-        isNewImage: formData.imageUrl !== article?.imageUrl
+        isNewImage: formData.imageUrl !== article?.imageUrl,
+        fullData: updatedArticle
       });
+
+      if (!updatedArticle.imageUrl && article?.imageUrl) {
+        console.log('Preserving existing image URL:', article.imageUrl);
+        updatedArticle.imageUrl = article.imageUrl;
+      }
 
       await articleStore.updateArticle(params.id as string, updatedArticle);
       
