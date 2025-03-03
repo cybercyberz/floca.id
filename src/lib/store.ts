@@ -146,6 +146,14 @@ export class ArticleStore {
 
   async updateArticle(id: string, article: Partial<Article>): Promise<void> {
     try {
+      console.log('Updating article with data:', { id, article });
+      
+      // Ensure imageUrl is included in the update
+      if (!article.imageUrl && this.cache.has(id)) {
+        const existingArticle = this.cache.get(id)!;
+        article.imageUrl = existingArticle.imageUrl;
+      }
+
       const docRef = doc(this.articlesCollection, id);
       await setDoc(docRef, article, { merge: true });
       
@@ -154,6 +162,8 @@ export class ArticleStore {
         const existingArticle = this.cache.get(id)!;
         this.cache.set(id, { ...existingArticle, ...article });
       }
+      
+      console.log('Article updated successfully with data:', article);
     } catch (error) {
       console.error('Error updating article:', error);
       throw error;
