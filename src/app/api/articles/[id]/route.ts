@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const article = await articleStore.getArticle(params.id);
+    const article = await articleStore.getArticleById(params.id);
     
     if (!article) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function PUT(
     const body = await request.json();
     const validatedData = articleSchema.parse(body);
 
-    const existingArticle = await articleStore.getArticle(params.id);
+    const existingArticle = await articleStore.getArticleById(params.id);
     if (!existingArticle) {
       return NextResponse.json(
         { error: 'Article not found' },
@@ -46,8 +46,7 @@ export async function PUT(
 
     await articleStore.updateArticle(params.id, {
       ...validatedData,
-      id: params.id, // Ensure ID doesn't change
-      date: existingArticle.date, // Keep the original date
+      // No need to set createdAt as it will be preserved by the store
     });
 
     return NextResponse.json({ message: 'Article updated successfully' });
