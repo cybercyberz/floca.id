@@ -10,6 +10,7 @@ export interface Article {
   featured: boolean;
   createdAt: Date;
   updatedAt: Date;
+  additionalImages?: string[]; // Array of additional image URLs for galleries
 }
 
 // ArticleFormData is what we get from the form, without id and date
@@ -22,6 +23,7 @@ export interface ArticleFormData {
   author: string;
   status: 'draft' | 'published';
   featured: boolean;
+  additionalImages?: string[]; // Array of additional image URLs for galleries
 }
 
 // For creating a new article, we need everything except the id

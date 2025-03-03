@@ -17,4 +17,5 @@ export const articleSchema = z.object({
     .max(50, 'Author name must be less than 50 characters'),
   status: z.enum(['draft', 'published']),
   featured: z.boolean().default(false),
+  additionalImages: z.array(z.string().url('Please provide valid image URLs')).optional(),
 }); 
