@@ -14,7 +14,8 @@ const mockSearchResults: Article[] = [
     content: 'Full article content here...',
     category: 'Technology',
     imageUrl: '/images/ai-healthcare.jpg',
-    date: 'Mar 15, 2024',
+    createdAt: new Date('2024-03-15'),
+    updatedAt: new Date('2024-03-15'),
     author: 'Dr. Sarah Chen',
     status: 'published',
     featured: false
@@ -26,7 +27,8 @@ const mockSearchResults: Article[] = [
     content: 'Full article content here...',
     category: 'Politics',
     imageUrl: '/images/climate-summit.jpg',
-    date: 'Mar 14, 2024',
+    createdAt: new Date('2024-03-14'),
+    updatedAt: new Date('2024-03-14'),
     author: 'James Wilson',
     status: 'published',
     featured: false
@@ -38,7 +40,8 @@ const mockSearchResults: Article[] = [
     content: 'Full article content here...',
     category: 'Business',
     imageUrl: '/images/remote-work.jpg',
-    date: 'Mar 13, 2024',
+    createdAt: new Date('2024-03-13'),
+    updatedAt: new Date('2024-03-13'),
     author: 'Emma Rodriguez',
     status: 'published',
     featured: false
