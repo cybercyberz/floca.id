@@ -26,3 +26,7 @@ export interface ArticleFormData {
 
 // For creating a new article, we need everything except the id
 export type NewArticle = Omit<Article, 'id'>; 
+
+// Shared categories across components
+export const CATEGORIES = ['Politics', 'Technology', 'Sports', 'Entertainment', 'Business'];
+export const ALL_CATEGORIES = ['All', ...CATEGORIES]; 

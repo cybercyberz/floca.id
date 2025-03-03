@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Article, ArticleFormData } from '@/types/article';
+import { Article, ArticleFormData, CATEGORIES } from '@/types/article';
 import CloudinaryUploadWidget from './CloudinaryUploadWidget';
 import TinyMCECloudinaryPlugin from './TinyMCECloudinaryPlugin';
 
@@ -86,10 +86,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit, isSubm
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
           <option value="">Select a category</option>
-          <option value="news">News</option>
-          <option value="technology">Technology</option>
-          <option value="business">Business</option>
-          <option value="lifestyle">Lifestyle</option>
+          {CATEGORIES.map(category => (
+            <option key={category} value={category}>{category}</option>
+          ))}
         </select>
       </div>
 
