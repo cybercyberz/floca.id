@@ -8,10 +8,9 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.cloudinary.com',
+        hostname: 'res.cloudinary.com',
       }
     ],
-    domains: ['res.cloudinary.com'],
   },
 };
 

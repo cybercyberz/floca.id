@@ -194,6 +194,45 @@ export class ArticleStore {
     }
   }
 
+  async fixAllArticleImageUrls(): Promise<void> {
+    try {
+      console.log('Starting to fix all article image URLs...');
+      const snapshot = await getDocs(this.articlesCollection);
+      const batch = writeBatch(db);
+      let updateCount = 0;
+
+      for (const docSnapshot of snapshot.docs) {
+        const article = docSnapshot.data() as Article;
+        if (article.imageUrl) {
+          // Check if the URL needs to be updated
+          if (!article.imageUrl.includes('res.cloudinary.com')) {
+            const updatedUrl = article.imageUrl.replace(/\/\/[^/]+\//, '//res.cloudinary.com/');
+            console.log(`Updating article ${docSnapshot.id}:`, {
+              oldUrl: article.imageUrl,
+              newUrl: updatedUrl
+            });
+            
+            const docRef = doc(this.articlesCollection, docSnapshot.id);
+            batch.update(docRef, { imageUrl: updatedUrl });
+            updateCount++;
+          }
+        }
+      }
+
+      if (updateCount > 0) {
+        await batch.commit();
+        console.log(`Successfully updated ${updateCount} articles`);
+        // Clear cache to ensure fresh data on next fetch
+        this.clearCache();
+      } else {
+        console.log('No articles needed URL updates');
+      }
+    } catch (error) {
+      console.error('Error fixing article URLs:', error);
+      throw error;
+    }
+  }
+
   // Clear cache and reset timestamp
   clearCache(): void {
     this.cache.clear();

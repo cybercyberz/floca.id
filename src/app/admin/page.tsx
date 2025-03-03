@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [isFixingUrls, setIsFixingUrls] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +39,21 @@ export default function AdminDashboard() {
       setError('Failed to fetch articles. Please try refreshing the page.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFixImageUrls = async () => {
+    try {
+      setIsFixingUrls(true);
+      await articleStore.fixAllArticleImageUrls();
+      // Refresh the articles list
+      await fetchArticles();
+      alert('Successfully fixed article image URLs');
+    } catch (error) {
+      console.error('Error fixing image URLs:', error);
+      alert('Failed to fix image URLs. Please check the console for details.');
+    } finally {
+      setIsFixingUrls(false);
     }
   };
 
@@ -133,11 +149,16 @@ export default function AdminDashboard() {
           >
             Create New Article
           </Link>
-          <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-            Import Content
-          </button>
-          <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-            Export Data
+          <button 
+            onClick={handleFixImageUrls}
+            disabled={isFixingUrls}
+            className={`px-4 py-2 ${
+              isFixingUrls 
+                ? 'bg-gray-300 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700'
+            } text-white rounded-lg transition-colors`}
+          >
+            {isFixingUrls ? 'Fixing Image URLs...' : 'Fix Image URLs'}
           </button>
         </div>
       </div>

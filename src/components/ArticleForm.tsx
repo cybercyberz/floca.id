@@ -79,10 +79,15 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ initialData, onSubmit }) => {
     if (result.event === 'success') {
       const imageUrl = result.info.secure_url;
       console.log('Setting image URL in form data:', imageUrl);
+      
+      // Ensure the URL is using res.cloudinary.com
+      const updatedUrl = imageUrl.replace(/\/\/[^/]+\//, '//res.cloudinary.com/');
+      console.log('Updated image URL:', updatedUrl);
+      
       setFormData(prev => {
         const updated = {
           ...prev,
-          imageUrl: imageUrl
+          imageUrl: updatedUrl
         };
         console.log('Updated form data:', updated);
         return updated;

@@ -16,6 +16,13 @@ export default function NewsCard({ article }: NewsCardProps) {
             alt={article.title}
             fill
             className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={false}
+            onError={(e) => {
+              console.error('Error loading image:', article.imageUrl);
+              const imgElement = e.target as HTMLImageElement;
+              imgElement.style.display = 'none';
+            }}
           />
         </div>
         <div className="p-4">

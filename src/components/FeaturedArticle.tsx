@@ -20,6 +20,12 @@ export default function FeaturedArticle({ article }: FeaturedArticleProps) {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 1200px) 100vw, 1200px"
             priority
+            quality={90}
+            onError={(e) => {
+              console.error('Error loading featured image:', article.imageUrl);
+              const imgElement = e.target as HTMLImageElement;
+              imgElement.style.display = 'none';
+            }}
           />
           <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
             <span className="inline-block bg-blue-500 text-white text-sm px-3 py-1 rounded-full mb-3">
