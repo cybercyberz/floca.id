@@ -35,7 +35,7 @@ export default function NewsCard({ article }: NewsCardProps) {
           </p>
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>{article.author}</span>
-            <span>{article.date}</span>
+            <span>{article.createdAt.toLocaleDateString()}</span>
           </div>
         </div>
       </div>

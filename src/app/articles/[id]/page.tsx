@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
 import Image from 'next/image';
 
-export default function ArticlePage() {
-  const params = useParams();
+interface ArticlePageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function ArticlePage({ params }: ArticlePageProps) {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,17 +19,15 @@ export default function ArticlePage() {
   useEffect(() => {
     async function loadArticle() {
       try {
-        setLoading(true);
-        setError(null);
-        const foundArticle = await articleStore.getArticle(params.id as string);
-        console.log('Loaded article:', foundArticle);
-        if (!foundArticle) {
-          throw new Error('Article not found');
+        const fetchedArticle = await articleStore.getArticleById(params.id);
+        if (!fetchedArticle) {
+          setError('Article not found');
+          return;
         }
-        setArticle(foundArticle);
+        setArticle(fetchedArticle);
       } catch (err) {
-        console.error('Error fetching article:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error loading article:', err);
+        setError('Failed to load article');
       } finally {
         setLoading(false);
       }
@@ -36,18 +38,25 @@ export default function ArticlePage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="h-64 bg-gray-200 rounded mb-8"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !article) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-red-50 border-l-4 border-red-400 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -57,7 +66,7 @@ export default function ArticlePage() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
+              <div className="mt-2 text-sm text-red-700">{error || 'Something went wrong'}</div>
             </div>
           </div>
         </div>
@@ -65,56 +74,43 @@ export default function ArticlePage() {
     );
   }
 
-  if (!article) {
-    return null;
-  }
-
-  console.log('Rendering article with data:', {
-    id: params.id,
-    hasImage: !!article.imageUrl,
-    imageUrl: article.imageUrl
-  });
-
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {article.imageUrl && (
-        <div className="relative w-full h-[400px] mb-8 rounded-lg overflow-hidden">
-          <Image
-            src={article.imageUrl}
-            alt={article.title}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            onError={(e) => {
-              console.error('Error loading image:', article.imageUrl);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-      )}
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
-        <div className="flex items-center text-gray-600">
-          <span>{new Date(article.date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}</span>
-          <span className="mx-2">•</span>
-          <span>{article.author}</span>
-          <span className="mx-2">•</span>
-          <span>{article.category}</span>
-        </div>
-      </header>
+    <article className="max-w-4xl mx-auto px-4 py-12">
+      <div className="mb-8">
+        {article.imageUrl && (
+          <div className="relative w-full h-96 mb-8">
+            <Image
+              src={article.imageUrl}
+              alt={article.title}
+              fill
+              className="object-cover rounded-lg"
+              sizes="(max-width: 768px) 100vw, 768px"
+              priority
+            />
+          </div>
+        )}
+        <header>
+          <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+          <div className="flex items-center text-gray-600">
+            <span>{new Date(article.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</span>
+            <span className="mx-2">•</span>
+            <span>By {article.author}</span>
+            {article.category && (
+              <>
+                <span className="mx-2">•</span>
+                <span>{article.category}</span>
+              </>
+            )}
+          </div>
+        </header>
+      </div>
       <div 
-        className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg prose-img:shadow-lg"
-        dangerouslySetInnerHTML={{ 
-          __html: article.content.replace(
-            /<img(.*?)src="(.*?)"(.*?)>/g, 
-            (match, p1, src, p3) => `<img${p1}src="${src}"${p3} class="w-full h-auto rounded-lg shadow-lg">`
-          )
-        }}
+        className="prose lg:prose-xl max-w-none"
+        dangerouslySetInnerHTML={{ __html: article.content }}
       />
     </article>
   );
