@@ -40,8 +40,12 @@ export default function HomePage() {
   }, []);
 
   const publishedArticles = filterArticles(articles, selectedCategory);
-  const featuredArticle = publishedArticles.find(article => article.featured) || publishedArticles[0];
-  const nonFeaturedArticles = publishedArticles.filter(article => article !== featuredArticle);
+  // Find all featured articles
+  const featuredArticles = publishedArticles.filter(article => article.featured);
+  // If there are no featured articles, use the first article as featured
+  const articlesToShow = featuredArticles.length > 0 ? featuredArticles : publishedArticles.slice(0, 1);
+  // Non-featured articles exclude all articles shown in the featured section
+  const nonFeaturedArticles = publishedArticles.filter(article => !articlesToShow.includes(article));
 
   if (loading) {
     return (
@@ -89,7 +93,7 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {featuredArticle && <FeaturedArticle article={featuredArticle} />}
+      {articlesToShow.length > 0 && <FeaturedArticle articles={articlesToShow} />}
       
       <div className="mt-12">
         <CategoryFilter
