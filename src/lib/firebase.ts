@@ -3,16 +3,16 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  // Your Firebase config object will go here
+  // Your Firebase config object
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 // Validate Firebase configuration
@@ -29,6 +29,7 @@ const validateFirebaseConfig = () => {
 let app: FirebaseApp;
 let db: Firestore;
 let analytics: Analytics | null = null;
+let auth: any;
 
 try {
   // Validate config before initialization
@@ -48,10 +49,13 @@ try {
     });
   }
   
+  // Initialize Auth
+  auth = getAuth(app);
+  
   console.log('Firebase initialized successfully with project:', firebaseConfig.projectId);
 } catch (error) {
   console.error('Error initializing Firebase:', error);
   throw error;
 }
 
-export { app, db, analytics }; 
+export { app, db, analytics, auth }; 

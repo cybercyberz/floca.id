@@ -49,4 +49,7 @@ next-env.d.ts
 credentials.json
 service-account.json
 
+# Firebase admin key
+firebase-admin-key.json
+
 .vercel

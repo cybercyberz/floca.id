@@ -1,67 +1,41 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { auth } from './lib/firebase';
 
-const JWT_SECRET = 'your-secret-key'; // Must match the secret in login route
-
-// Paths that require authentication
-const protectedPaths = ['/admin', '/admin/articles'];
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Check if the path is protected
-  if (protectedPaths.some(prefix => path.startsWith(prefix))) {
-    const token = request.cookies.get('authToken')?.value;
+  // Define public paths that don't require authentication
+  const isPublicPath = path === '/login';
+  
+  // Get Firebase ID token from Authorization header
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
 
-    if (!token) {
-      // Redirect to login if no token is present
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    try {
-      // Verify the token
-      jwt.verify(token, JWT_SECRET);
-      
-      // Token is valid, allow the request
-      const response = NextResponse.next();
-      
-      // Ensure the token is passed along
-      response.headers.set('x-auth-token', token);
-      
-      return response;
-    } catch (error) {
-      // Clear invalid token and redirect to login
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      response.cookies.delete('authToken');
-      return response;
-    }
+  if (!isPublicPath && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If the user is logged in and tries to access login page, redirect to admin
-  if (path === '/login') {
-    const token = request.cookies.get('authToken')?.value;
-    if (token) {
-      try {
-        jwt.verify(token, JWT_SECRET);
+  if (isPublicPath && token) {
+    try {
+      // Verify token with Firebase Admin SDK
+      const user = auth.currentUser;
+      if (user) {
         return NextResponse.redirect(new URL('/admin', request.url));
-      } catch (error) {
-        // Token is invalid, clear it
-        const response = NextResponse.next();
-        response.cookies.delete('authToken');
-        return response;
       }
+    } catch (error) {
+      // Token is invalid, continue to login page
+      console.error('Token verification error:', error);
     }
   }
 
   return NextResponse.next();
 }
 
-// Configure matcher for middleware
+// Configure the middleware to run on specific paths
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/api/admin/:path*',
-    '/login',
-  ],
-} 
+    '/login'
+  ]
+}; 
