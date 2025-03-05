@@ -1,27 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from './Logo';
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  const categories = [
-    { name: 'Politics', href: '/politics' },
-    { name: 'Technology', href: '/technology' },
-    { name: 'Sports', href: '/sports' },
-    { name: 'Entertainment', href: '/entertainment' },
-    { name: 'Business', href: '/business' },
-  ];
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    setIsAuthenticated(!!token);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setIsAuthenticated(false);
+    router.push('/');
   };
 
   return (
@@ -37,12 +42,29 @@ const Header = () => {
             >
               Home
             </Link>
-            <Link 
-              href="/admin" 
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-            >
-              Admin
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  href="/admin" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                >
+                  Admin
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link 
+                href="/login" 
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              >
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       </div>

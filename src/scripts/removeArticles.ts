@@ -4,12 +4,12 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBFnBhqBb-ZAFbVbMEr6FCUqSI_Cq3QHHI",
-  authDomain: "skilled-torus-452322.firebaseapp.com",
-  projectId: "skilled-torus-452322",
-  storageBucket: "skilled-torus-452322.appspot.com",
-  messagingSenderId: "1098979033330",
-  appId: "1:1098979033330:web:a2b0f5d2c3f7c4b5d6e7f8"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
