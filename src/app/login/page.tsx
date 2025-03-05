@@ -23,23 +23,23 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include', // Important: This allows cookies to be sent and received
+        credentials: 'include',
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Invalid credentials');
+        throw new Error(data.error || 'Invalid credentials');
       }
 
-      const data = await response.json();
-      
       if (data.success) {
-        // Redirect to admin dashboard
-        router.push('/admin');
-        router.refresh(); // Refresh to update the UI with new auth state
+        // Force a hard navigation to the admin page
+        window.location.href = '/admin';
       } else {
         throw new Error('Login failed');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Invalid email or password');
     } finally {
       setIsLoading(false);

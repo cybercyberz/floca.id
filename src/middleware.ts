@@ -22,10 +22,35 @@ export function middleware(request: NextRequest) {
     try {
       // Verify the token
       jwt.verify(token, JWT_SECRET);
-      return NextResponse.next();
+      
+      // Token is valid, allow the request
+      const response = NextResponse.next();
+      
+      // Ensure the token is passed along
+      response.headers.set('x-auth-token', token);
+      
+      return response;
     } catch (error) {
-      // Redirect to login if token is invalid
-      return NextResponse.redirect(new URL('/login', request.url));
+      // Clear invalid token and redirect to login
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('authToken');
+      return response;
+    }
+  }
+
+  // If the user is logged in and tries to access login page, redirect to admin
+  if (path === '/login') {
+    const token = request.cookies.get('authToken')?.value;
+    if (token) {
+      try {
+        jwt.verify(token, JWT_SECRET);
+        return NextResponse.redirect(new URL('/admin', request.url));
+      } catch (error) {
+        // Token is invalid, clear it
+        const response = NextResponse.next();
+        response.cookies.delete('authToken');
+        return response;
+      }
     }
   }
 
@@ -37,5 +62,6 @@ export const config = {
   matcher: [
     '/admin/:path*',
     '/api/admin/:path*',
+    '/login',
   ],
 } 
