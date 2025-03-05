@@ -4,7 +4,7 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "***REMOVED***",
+  apiKey: "AIzaSyBFnBhqBb-ZAFbVbMEr6FCUqSI_Cq3QHHI",
   authDomain: "skilled-torus-452322.firebaseapp.com",
   projectId: "skilled-torus-452322",
   storageBucket: "skilled-torus-452322.appspot.com",
