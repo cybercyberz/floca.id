@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signIn } from '@/lib/firebase-auth';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -21,9 +20,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      // Firebase successfully authenticated the user
-      router.push('/admin');
+      const user = await signIn(formData.email, formData.password);
+      if (user) {
+        // Successfully authenticated as admin
+        router.push('/admin');
+      } else {
+        setError('Invalid credentials or not an admin user');
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login');

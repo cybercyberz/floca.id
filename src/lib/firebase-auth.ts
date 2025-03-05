@@ -1,7 +1,9 @@
+'use client';
+
 import { auth } from './firebase';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
-export async function validateUser(email: string, password: string) {
+export async function signIn(email: string, password: string) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const idTokenResult = await userCredential.user.getIdTokenResult();
@@ -25,7 +27,7 @@ export async function validateUser(email: string, password: string) {
   }
 }
 
-export async function logoutUser() {
+export async function logOut() {
   try {
     await signOut(auth);
     return true;
@@ -36,7 +38,7 @@ export async function logoutUser() {
 }
 
 // Helper to check if user is authenticated and is an admin
-export async function getCurrentUser() {
+export function getCurrentUser() {
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe();

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './lib/firebase';
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -12,21 +11,17 @@ export async function middleware(request: NextRequest) {
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
 
-  if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  // For API routes, check Authorization header
+  if (path.startsWith('/api/')) {
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.next();
   }
 
-  if (isPublicPath && token) {
-    try {
-      // Verify token with Firebase Admin SDK
-      const user = auth.currentUser;
-      if (user) {
-        return NextResponse.redirect(new URL('/admin', request.url));
-      }
-    } catch (error) {
-      // Token is invalid, continue to login page
-      console.error('Token verification error:', error);
-    }
+  // For page routes
+  if (!isPublicPath && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();
@@ -36,6 +31,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/api/admin/:path*',
     '/login'
   ]
 }; 
