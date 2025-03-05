@@ -30,4 +30,12 @@ export function middleware(request: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+// Configure matcher for middleware
+export const config = {
+  matcher: [
+    '/admin/:path*',
+    '/api/admin/:path*',
+  ],
 } 

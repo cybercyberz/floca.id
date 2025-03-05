@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 // In a real application, these would be stored securely
 // and the password would be hashed
@@ -27,8 +28,19 @@ export async function POST(request: Request) {
       { expiresIn: '1d' }
     );
 
-    // Return success response with token
-    return NextResponse.json({ token });
+    // Create the response
+    const response = NextResponse.json({ success: true });
+
+    // Set the cookie in the response
+    response.cookies.set('authToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

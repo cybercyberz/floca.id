@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from './Logo';
-import Cookies from 'js-cookie';
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,9 +11,19 @@ const Header = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = Cookies.get('authToken');
-    setIsAuthenticated(!!token);
+    // Check authentication status from the server
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/check', {
+          credentials: 'include',
+        });
+        setIsAuthenticated(response.ok);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+    
+    checkAuth();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -24,10 +33,18 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    Cookies.remove('authToken');
-    setIsAuthenticated(false);
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setIsAuthenticated(false);
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (

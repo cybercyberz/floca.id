@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
-import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,6 +23,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // Important: This allows cookies to be sent and received
       });
 
       if (!response.ok) {
@@ -32,11 +32,13 @@ export default function LoginPage() {
 
       const data = await response.json();
       
-      // Store the token in a cookie
-      Cookies.set('authToken', data.token, { expires: 1 }); // Expires in 1 day
-      
-      // Redirect to admin dashboard
-      router.push('/admin');
+      if (data.success) {
+        // Redirect to admin dashboard
+        router.push('/admin');
+        router.refresh(); // Refresh to update the UI with new auth state
+      } else {
+        throw new Error('Login failed');
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {
