@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
 
   // Check if the path is protected
   if (protectedPaths.some(prefix => path.startsWith(prefix))) {
-    const token = request.headers.get('authorization')?.split(' ')[1];
+    const token = request.cookies.get('authToken')?.value;
 
     if (!token) {
       // Redirect to login if no token is present

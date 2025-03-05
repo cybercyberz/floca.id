@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
+import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,8 +32,8 @@ export default function LoginPage() {
 
       const data = await response.json();
       
-      // Store the token in localStorage or other secure storage
-      localStorage.setItem('authToken', data.token);
+      // Store the token in a cookie
+      Cookies.set('authToken', data.token, { expires: 1 }); // Expires in 1 day
       
       // Redirect to admin dashboard
       router.push('/admin');

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Logo from './Logo';
+import Cookies from 'js-cookie';
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,7 +13,7 @@ const Header = () => {
 
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('authToken');
+    const token = Cookies.get('authToken');
     setIsAuthenticated(!!token);
   }, []);
 
@@ -24,7 +25,7 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    Cookies.remove('authToken');
     setIsAuthenticated(false);
     router.push('/');
   };
