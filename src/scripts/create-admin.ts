@@ -5,6 +5,7 @@
 
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { cert } from 'firebase-admin/app';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
@@ -41,8 +42,8 @@ const initializeFirebaseAdmin = () => {
     
     // Initialize Firebase Admin
     const app = initializeApp({
-      credential: require('firebase-admin').credential.cert(serviceAccount),
-      databaseURL: process.env.FIREBASE_DATABASE_URL,
+      credential: cert(serviceAccount),
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
     
     console.log('Firebase Admin initialized successfully');
@@ -71,19 +72,44 @@ const createAdminUser = async () => {
       process.exit(1);
     }
     
-    // Create user
-    const userRecord = await auth.createUser({
-      email,
-      password,
-      displayName,
-      emailVerified: true,
-    });
+    if (password.length < 6) {
+      console.error('Password must be at least 6 characters');
+      process.exit(1);
+    }
     
-    // Set custom claims to mark as admin
-    await auth.setCustomUserClaims(userRecord.uid, { admin: true });
-    
-    console.log(`Admin user created successfully with UID: ${userRecord.uid}`);
-    console.log('You can now log in with these credentials at /admin/login');
+    // Check if user already exists
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      console.log(`User with email ${email} already exists with UID: ${userRecord.uid}`);
+      
+      // Ask if user should be made admin
+      const makeAdmin = await prompt('Make this user an admin? (y/n): ');
+      
+      if (makeAdmin.toLowerCase() === 'y') {
+        // Set admin custom claim
+        await auth.setCustomUserClaims(userRecord.uid, { admin: true });
+        console.log(`User ${email} has been granted admin privileges`);
+      }
+    } catch (error: any) {
+      // User doesn't exist, create new user
+      if (error.code === 'auth/user-not-found') {
+        // Create user
+        const userRecord = await auth.createUser({
+          email,
+          password,
+          displayName,
+          emailVerified: true,
+        });
+        
+        // Set admin custom claim
+        await auth.setCustomUserClaims(userRecord.uid, { admin: true });
+        
+        console.log(`Admin user created successfully with UID: ${userRecord.uid}`);
+        console.log('You can now log in with these credentials at /admin/login');
+      } else {
+        throw error;
+      }
+    }
   } catch (error) {
     console.error('Error creating admin user:', error);
   } finally {

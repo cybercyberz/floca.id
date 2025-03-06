@@ -72,6 +72,7 @@ export async function GET() {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        admin: true, // User is admin if they passed verification
       }
     });
   } catch (error) {

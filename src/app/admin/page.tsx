@@ -5,16 +5,48 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth';
 import Image from 'next/image';
 
 export default function AdminPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // Check if user is authenticated and has admin privileges
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      try {
+        // Get ID token result to check custom claims
+        const idTokenResult = await user.getIdTokenResult();
+        
+        // Check if user has admin claim
+        if (idTokenResult.claims.admin === true) {
+          setIsAdmin(true);
+        } else {
+          setError('You do not have admin privileges');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setError('Failed to verify admin privileges');
+      }
+    };
+    
+    if (!loading && user) {
+      checkAdminStatus();
+    }
+  }, [user, loading]);
+
+  // Fetch articles when user is authenticated and has admin privileges
   useEffect(() => {
     const fetchArticles = async () => {
+      if (!isAdmin) return;
+      
       try {
         const fetchedArticles = await articleStore.getArticles();
         setArticles(fetchedArticles);
@@ -26,8 +58,12 @@ export default function AdminPage() {
       }
     };
 
-    fetchArticles();
-  }, []);
+    if (isAdmin) {
+      fetchArticles();
+    } else if (!loading) {
+      setIsLoading(false);
+    }
+  }, [isAdmin, loading]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this article?')) {
@@ -43,7 +79,7 @@ export default function AdminPage() {
     }
   };
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
