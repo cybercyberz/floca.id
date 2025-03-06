@@ -5,16 +5,48 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth';
 import Image from 'next/image';
 
 export default function AdminPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // Check if user is authenticated and has admin privileges
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      try {
+        // Get ID token result to check custom claims
+        const idTokenResult = await user.getIdTokenResult();
+        
+        // Check if user has admin claim
+        if (idTokenResult.claims.admin === true) {
+          setIsAdmin(true);
+        } else {
+          setError('You do not have admin privileges');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setError('Failed to verify admin privileges');
+      }
+    };
+    
+    if (!loading && user) {
+      checkAdminStatus();
+    }
+  }, [user, loading]);
+
+  // Fetch articles when user is authenticated and has admin privileges
   useEffect(() => {
     const fetchArticles = async () => {
+      if (!isAdmin) return;
+      
       try {
         const fetchedArticles = await articleStore.getArticles();
         setArticles(fetchedArticles);
@@ -26,8 +58,12 @@ export default function AdminPage() {
       }
     };
 
-    fetchArticles();
-  }, []);
+    if (isAdmin) {
+      fetchArticles();
+    } else if (!loading) {
+      setIsLoading(false);
+    }
+  }, [isAdmin, loading]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this article?')) {
@@ -43,7 +79,7 @@ export default function AdminPage() {
     }
   };
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
@@ -91,57 +127,63 @@ export default function AdminPage() {
       </div>
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {articles.map(article => (
-            <li key={article.id}>
-              <div className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {article.imageUrl && (
-                      <div className="relative w-16 h-16">
-                        <Image
-                          src={article.imageUrl}
-                          alt={article.title}
-                          fill
-                          className="object-cover rounded"
-                          sizes="64px"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <h2 className="text-lg font-medium text-gray-900">{article.title}</h2>
-                      <div className="mt-1 flex items-center space-x-2 text-sm text-gray-500">
-                        <span>{article.category}</span>
-                        <span>•</span>
-                        <span>{article.status}</span>
-                        {article.featured && (
-                          <>
-                            <span>•</span>
-                            <span className="text-blue-600">Featured</span>
-                          </>
-                        )}
+        {articles.length === 0 ? (
+          <div className="px-4 py-6 text-center text-gray-500">
+            No articles found. Create your first article by clicking the "New Article" button.
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {articles.map(article => (
+              <li key={article.id}>
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      {article.imageUrl && (
+                        <div className="relative w-16 h-16">
+                          <Image
+                            src={article.imageUrl}
+                            alt={article.title}
+                            fill
+                            className="object-cover rounded"
+                            sizes="64px"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <h2 className="text-lg font-medium text-gray-900">{article.title}</h2>
+                        <div className="mt-1 flex items-center space-x-2 text-sm text-gray-500">
+                          <span>{article.category}</span>
+                          <span>•</span>
+                          <span>{article.status}</span>
+                          {article.featured && (
+                            <>
+                              <span>•</span>
+                              <span className="text-blue-600">Featured</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Link
-                      href={`/admin/articles/${article.id}/edit`}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(article.id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex space-x-2">
+                      <Link
+                        href={`/admin/articles/${article.id}/edit`}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(article.id)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

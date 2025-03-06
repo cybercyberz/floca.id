@@ -3,6 +3,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
+import { getAuth, Auth, browserSessionPersistence, setPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   // Your Firebase config object will go here
@@ -28,6 +29,7 @@ const validateFirebaseConfig = () => {
 
 let app: FirebaseApp;
 let db: Firestore;
+let auth: Auth;
 let analytics: Analytics | null = null;
 
 try {
@@ -39,6 +41,17 @@ try {
   
   // Initialize Firestore
   db = getFirestore(app);
+  
+  // Initialize Authentication
+  auth = getAuth(app);
+  
+  // Set session persistence
+  if (typeof window !== 'undefined') {
+    setPersistence(auth, browserSessionPersistence)
+      .catch((error) => {
+        console.error('Error setting auth persistence:', error);
+      });
+  }
   
   // Initialize Analytics conditionally
   if (typeof window !== 'undefined') {
@@ -54,4 +67,4 @@ try {
   throw error;
 }
 
-export { app, db, analytics }; 
+export { app, db, auth, analytics }; 
