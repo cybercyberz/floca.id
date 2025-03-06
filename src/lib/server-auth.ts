@@ -98,7 +98,7 @@ export async function requireAuth() {
 // Rate limiting for failed login attempts
 const failedLoginAttempts = new Map<string, { count: number, timestamp: number }>();
 
-export function checkRateLimit(ip: string) {
+export async function checkRateLimit(ip: string) {
   const MAX_ATTEMPTS = 5;
   const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
   
@@ -127,7 +127,7 @@ export function checkRateLimit(ip: string) {
   };
 }
 
-export function incrementFailedAttempt(ip: string) {
+export async function incrementFailedAttempt(ip: string) {
   const attempt = failedLoginAttempts.get(ip) || { count: 0, timestamp: Date.now() };
   failedLoginAttempts.set(ip, {
     count: attempt.count + 1,
