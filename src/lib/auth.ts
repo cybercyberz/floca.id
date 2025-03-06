@@ -14,11 +14,11 @@ import { useState, useEffect } from 'react';
 
 // Error messages for user-friendly display
 export const AUTH_ERRORS = {
-  'auth/user-not-found': 'No account found with this email address',
-  'auth/wrong-password': 'Incorrect password',
+  'auth/user-not-found': 'Invalid email or password',
+  'auth/wrong-password': 'Invalid email or password',
   'auth/invalid-credential': 'Invalid email or password',
   'auth/email-already-in-use': 'An account with this email already exists',
-  'auth/weak-password': 'Password should be at least 6 characters',
+  'auth/weak-password': 'Password is not strong enough',
   'auth/invalid-email': 'Please enter a valid email address',
   'auth/too-many-requests': 'Too many failed login attempts. Please try again later.',
   'auth/network-request-failed': 'Network error. Please check your connection.',
