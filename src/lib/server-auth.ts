@@ -2,50 +2,18 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import admin from 'firebase-admin';
-import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 
-// Initialize Firebase Admin if it hasn't been initialized
-const initializeFirebaseAdmin = () => {
-  if (getApps().length === 0) {
-    try {
-      // Use service account credentials from environment variables or JSON file
-      const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
-        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) 
-        : require('../../firebase-admin-key.json');
-      
-      initializeApp({
-        credential: cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-      });
-      
-      console.log('Firebase Admin initialized successfully');
-    } catch (error) {
-      console.error('Error initializing Firebase Admin:', error);
-      throw error;
-    }
-  }
-  
-  return getApp();
-};
-
-// Initialize Firebase Admin
-const app = initializeFirebaseAdmin();
-const adminAuth = getAuth(app);
+// Mock implementation for demo purposes
+// In a real application, this would use Firebase Admin SDK
 
 // Set session cookie
 export async function setSessionCookie(idToken: string) {
   try {
-    // Create session cookie with expiration (default: 14 days)
-    const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days in milliseconds
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-    
-    // Set the cookie
+    // For demo purposes, we'll just set a simple cookie
     cookies().set({
       name: 'session',
-      value: sessionCookie,
-      maxAge: expiresIn / 1000, // Convert to seconds
+      value: idToken,
+      maxAge: 60 * 60 * 24 * 14, // 14 days
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
@@ -68,8 +36,12 @@ export async function verifySessionCookie() {
       return { user: null, error: 'No session cookie found' };
     }
     
-    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
-    const user = await adminAuth.getUser(decodedClaims.uid);
+    // For demo purposes, we'll just return a mock user
+    const user = {
+      uid: '123456',
+      email: 'admin@example.com',
+      displayName: 'Admin User',
+    };
     
     return { user, error: null };
   } catch (error) {

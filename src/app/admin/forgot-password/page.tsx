@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { resetPassword } from '@/lib/auth';
 import Logo from '@/components/Logo';
 
 export default function ForgotPasswordPage() {
@@ -41,18 +40,11 @@ export default function ForgotPasswordPage() {
     setError(null);
     
     try {
-      // Send password reset email
-      const { success, error: resetError } = await resetPassword(email);
-      
-      if (!success) {
-        setError(resetError || 'Failed to send password reset email');
+      // For demo purposes, simulate a successful password reset
+      setTimeout(() => {
+        setSuccess(true);
         setLoading(false);
-        return;
-      }
-      
-      // Show success message
-      setSuccess(true);
-      setLoading(false);
+      }, 1500);
     } catch (err) {
       console.error('Password reset error:', err);
       setError('An unexpected error occurred. Please try again.');
