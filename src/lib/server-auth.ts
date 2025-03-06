@@ -2,18 +2,50 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import admin from 'firebase-admin';
+import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-// Mock implementation for demo purposes
-// In a real application, this would use Firebase Admin SDK
+// Initialize Firebase Admin if it hasn't been initialized
+const initializeFirebaseAdmin = () => {
+  if (getApps().length === 0) {
+    try {
+      // Use service account credentials from environment variables or JSON file
+      const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
+        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) 
+        : require('../../firebase-admin-key.json');
+      
+      initializeApp({
+        credential: cert(serviceAccount),
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      });
+      
+      console.log('Firebase Admin initialized successfully');
+    } catch (error) {
+      console.error('Error initializing Firebase Admin:', error);
+      throw error;
+    }
+  }
+  
+  return getApp();
+};
+
+// Initialize Firebase Admin
+const app = initializeFirebaseAdmin();
+const adminAuth = getAuth(app);
 
 // Set session cookie
 export async function setSessionCookie(idToken: string) {
   try {
-    // For demo purposes, we'll just set a simple cookie
+    // Create session cookie with expiration (default: 14 days)
+    const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days in milliseconds
+    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+    
+    // Set the cookie
     cookies().set({
       name: 'session',
-      value: idToken,
-      maxAge: 60 * 60 * 24 * 14, // 14 days
+      value: sessionCookie,
+      maxAge: expiresIn / 1000, // Convert to seconds
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
@@ -36,12 +68,15 @@ export async function verifySessionCookie() {
       return { user: null, error: 'No session cookie found' };
     }
     
-    // For demo purposes, we'll just return a mock user
-    const user = {
-      uid: '123456',
-      email: 'admin@example.com',
-      displayName: 'Admin User',
-    };
+    // Verify the session cookie
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const user = await adminAuth.getUser(decodedClaims.uid);
+    
+    // Check if user has admin role
+    const customClaims = user.customClaims || {};
+    if (!customClaims.admin) {
+      return { user: null, error: 'User does not have admin privileges' };
+    }
     
     return { user, error: null };
   } catch (error) {
@@ -105,4 +140,36 @@ export async function incrementFailedAttempt(ip: string) {
     count: attempt.count + 1,
     timestamp: attempt.timestamp
   });
+}
+
+// Set admin role for a user
+export async function setAdminRole(uid: string) {
+  try {
+    await adminAuth.setCustomUserClaims(uid, { admin: true });
+    return { success: true };
+  } catch (error) {
+    console.error('Error setting admin role:', error);
+    return { success: false, error: 'Failed to set admin role' };
+  }
+}
+
+// Create a new admin user
+export async function createAdminUser(email: string, password: string, displayName: string) {
+  try {
+    // Create the user
+    const userRecord = await adminAuth.createUser({
+      email,
+      password,
+      displayName,
+      emailVerified: true,
+    });
+    
+    // Set admin role
+    await setAdminRole(userRecord.uid);
+    
+    return { user: userRecord, error: null };
+  } catch (error: any) {
+    console.error('Error creating admin user:', error);
+    return { user: null, error: error.message || 'Failed to create admin user' };
+  }
 } 

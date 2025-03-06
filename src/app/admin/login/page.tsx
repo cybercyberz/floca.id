@@ -74,27 +74,29 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      // For demo purposes, accept any email/password with admin@example.com/password
-      if (email === 'admin@example.com' && password === 'password') {
-        // Create a mock ID token
-        const mockIdToken = 'mock-id-token-' + Date.now();
-        
-        // Set session cookie on the server
-        const { success, error: sessionError } = await setSessionCookie(mockIdToken);
-        
-        if (!success) {
-          setError(sessionError || 'Failed to create session');
-          setLoading(false);
-          return;
-        }
-        
-        // Redirect to the intended destination or admin dashboard
-        router.push(redirectPath);
-      } else {
-        // Simulate a login error
-        setError('Invalid email or password');
+      // Attempt to login with Firebase
+      const { user, error: loginError } = await loginWithEmailAndPassword(email, password);
+      
+      if (loginError || !user) {
+        setError(loginError || 'Login failed');
         setLoading(false);
+        return;
       }
+      
+      // Get ID token for session cookie
+      const idToken = await user.getIdToken();
+      
+      // Set session cookie on the server
+      const { success, error: sessionError } = await setSessionCookie(idToken);
+      
+      if (!success) {
+        setError(sessionError || 'Failed to create session');
+        setLoading(false);
+        return;
+      }
+      
+      // Redirect to the intended destination or admin dashboard
+      router.push(redirectPath);
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -114,9 +116,6 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to access the admin dashboard
-          </p>
-          <p className="mt-2 text-sm text-blue-600 font-semibold">
-            Demo credentials: admin@example.com / password
           </p>
         </div>
         
