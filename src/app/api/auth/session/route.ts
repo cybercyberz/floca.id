@@ -7,12 +7,12 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
     
     // Check rate limiting
-    const rateLimitCheck = checkRateLimit(ip);
-    if (rateLimitCheck.limited) {
+    const rateLimitCheck = await checkRateLimit(ip);
+    if (rateLimitCheck.limited === true) {
       return NextResponse.json(
         { 
           success: false, 
-          error: `Too many login attempts. Please try again in ${rateLimitCheck.timeRemaining} minutes.` 
+          error: `Too many login attempts. Please try again in ${rateLimitCheck.timeRemaining || 15} minutes.` 
         },
         { status: 429 }
       );
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { idToken } = await request.json();
     
     if (!idToken) {
-      incrementFailedAttempt(ip);
+      await incrementFailedAttempt(ip);
       return NextResponse.json(
         { success: false, error: 'ID token is required' },
         { status: 400 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const { success, error } = await setSessionCookie(idToken);
     
     if (!success) {
-      incrementFailedAttempt(ip);
+      await incrementFailedAttempt(ip);
       return NextResponse.json(
         { success: false, error: error || 'Failed to create session' },
         { status: 401 }
