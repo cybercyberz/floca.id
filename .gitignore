@@ -42,6 +42,8 @@ next-env.d.ts
 firebase-admin-key.json
 *-admin-key.json
 call-admin-function.js
+set-admin.js
+set-admin-claim.js
 
 # Line ending issues
 *.js text eol=lf
