@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Article } from '@/types/article';
 import { articleStore } from '@/lib/store';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/firebase-client';
 import Image from 'next/image';
 
 export default function AdminPage() {

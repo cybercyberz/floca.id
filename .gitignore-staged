@@ -1,0 +1,4 @@
+# Files to ignore changes to (already tracked)
+.env.production
+call-admin-function.js
+*-admin-key.json 

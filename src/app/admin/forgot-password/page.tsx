@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import { resetPassword } from '@/lib/auth';
+import { resetPassword } from '@/lib/firebase-client';
 import Logo from '@/components/Logo';
 
 export default function ForgotPasswordPage() {

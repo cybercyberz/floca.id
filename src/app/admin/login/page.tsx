@@ -3,8 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { loginWithEmailAndPassword } from '@/lib/auth';
-import { setSessionCookie } from '@/lib/server-auth';
+import { loginWithEmailAndPassword } from '@/lib/firebase-client';
 import Logo from '@/components/Logo';
 
 export default function LoginPage() {
@@ -83,20 +82,10 @@ export default function LoginPage() {
         return;
       }
       
-      // Get ID token for session cookie
-      const idToken = await user.getIdToken();
+      console.log('Login successful, redirecting to:', redirectPath);
       
-      // Set session cookie on the server
-      const { success, error: sessionError } = await setSessionCookie(idToken);
-      
-      if (!success) {
-        setError(sessionError || 'Failed to create session');
-        setLoading(false);
-        return;
-      }
-      
-      // Redirect to the intended destination or admin dashboard
-      router.push(redirectPath);
+      // Force a hard navigation to ensure the page refreshes
+      window.location.href = redirectPath;
     } catch (err) {
       console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');

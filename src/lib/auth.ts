@@ -94,7 +94,7 @@ export const useAuth = () => {
   return { user, loading };
 };
 
-// Check if user is authenticated (for server components)
+// Check if user is authenticated (for client components)
 export const isAuthenticated = () => {
   return auth.currentUser !== null;
 }; 

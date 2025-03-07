@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import Logo from '@/components/Logo';
-import { useAuth, logout } from '@/lib/auth';
+import { useAuth, logout } from '@/lib/firebase-client';
 
 export default function AdminLayout({
   children,
@@ -32,14 +32,6 @@ export default function AdminLayout({
     try {
       const { success } = await logout();
       if (success) {
-        // Call the logout API to clear the session cookie
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
         // Redirect to login page
         router.push('/admin/login');
       }

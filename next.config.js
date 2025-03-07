@@ -21,6 +21,7 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     // Fix for undici compatibility issues
     if (!isServer) {
+      // Add fallbacks for Node.js core modules
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -38,10 +39,22 @@ const nextConfig = {
         util: require.resolve('util/'),
         buffer: require.resolve('buffer/'),
       };
+      
+      // Exclude problematic dependencies from client bundle
+      config.module.rules.push({
+        test: /node_modules[\/\\](firebase|@firebase)[\/\\].*\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      });
     }
+    
     return config;
   },
   transpilePackages: ['firebase', '@firebase/auth'],
+  experimental: {
+    serverComponentsExternalPackages: ['firebase-admin'],
+  },
 };
 
 module.exports = nextConfig;

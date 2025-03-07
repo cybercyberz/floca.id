@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+/functions/node_modules
 
 # testing
 /coverage
@@ -27,6 +28,8 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
+.env.vercel
 
 # vercel
 .vercel
@@ -37,3 +40,19 @@ next-env.d.ts
 
 # firebase admin key
 firebase-admin-key.json
+*-admin-key.json
+call-admin-function.js
+
+# Line ending issues
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Ignore build artifacts
+.firebase/
+
+# Pre-commit hooks
+.husky/
+.pre-commit-config.yaml
