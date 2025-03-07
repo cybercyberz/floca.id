@@ -1,50 +1,44 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Define the paths that should be protected
-const PROTECTED_PATHS = [
-  '/admin',
-  '/admin/articles',
-  '/admin/articles/new',
-];
+// In-memory store for rate limiting
+const rateLimitStore = new Map<string, { count: number, timestamp: number }>();
+
+// Rate limit configuration
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 60; // 60 requests per minute
 
 // Define the login path
 const LOGIN_PATH = '/admin/login';
 
-// This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Check if the path is protected
-  const isProtectedPath = PROTECTED_PATHS.some(path => 
-    pathname === path || pathname.startsWith(`${path}/`)
-  );
-  
-  // If it's not a protected path, allow the request
-  if (!isProtectedPath) {
-    return NextResponse.next();
+  // Handle admin routes protection
+  if (request.nextUrl.pathname.startsWith('/admin/') && 
+      !request.nextUrl.pathname.startsWith(LOGIN_PATH)) {
+    
+    // Check for session cookie
+    const sessionCookie = request.cookies.get('session');
+    
+    // If no session cookie, redirect to login
+    if (!sessionCookie) {
+      const url = new URL(LOGIN_PATH, request.url);
+      return NextResponse.redirect(url);
+    }
   }
   
-  // If it's the login page, allow the request
-  if (pathname === LOGIN_PATH) {
-    return NextResponse.next();
-  }
+  // Add security headers to all responses
+  const response = NextResponse.next();
   
-  // Check for the session token in cookies
-  const sessionCookie = request.cookies.get('session');
+  // Security headers
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // If there's no session cookie, redirect to login
-  if (!sessionCookie) {
-    const url = new URL(LOGIN_PATH, request.url);
-    url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
-  }
-  
-  // Allow the request to continue
-  return NextResponse.next();
+  return response;
 }
 
-// Configure the middleware to run only for admin routes
+// Configure which paths should be processed by this middleware
 export const config = {
   matcher: ['/admin/:path*'],
 }; 

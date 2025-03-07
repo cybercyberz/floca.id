@@ -6,8 +6,8 @@ import Header from "@/components/Header";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "floca.id - Your Daily News Source",
-  description: "Stay informed with the latest news and stories from around the world.",
+  title: 'Admin Dashboard',
+  description: 'A modern admin dashboard',
 };
 
 export default function RootLayout({
