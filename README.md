@@ -4,6 +4,18 @@
 
 Floca.id is a modern web application built with Next.js, Firebase, and various other technologies to provide a robust content management system with rich media capabilities. The application is deployed on both Vercel (for production) and Google Cloud VM (for staging/development).
 
+## Features
+
+- 🚀 Built with Next.js 14 and TypeScript
+- 💅 Styled with Tailwind CSS
+- 📝 Rich text editing with TinyMCE
+- 🖼️ Image upload and management with Cloudinary
+- ✨ Modern, responsive design
+- 🔍 Search functionality
+- 📱 Mobile-friendly interface
+- 🔐 Admin dashboard for content management
+- ✅ Form validation with Zod
+
 ## Technology Stack
 
 ### Frontend
