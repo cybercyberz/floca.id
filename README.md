@@ -99,7 +99,7 @@ FIREBASE_ADMIN_PASSWORD
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/floca.id.git
+git clone https://github.com/cybercyberz/floca.id.git
 cd floca.id
 ```
 
@@ -127,12 +127,12 @@ npm run dev
 ### Google Cloud VM Deployment
 1. SSH into your VM:
 ```bash
-gcloud compute ssh floca-web --zone=asia-southeast2-a
+gcloud compute ssh floca-web --zone=asia-southeast2-a (i use this for jakarta server)
 ```
 
 2. Navigate to your project directory:
 ```bash
-cd /home/vellamatte/floca.id
+cd /home/YOUR_USER_NAME/floca.id
 ```
 
 3. Pull the latest changes:
